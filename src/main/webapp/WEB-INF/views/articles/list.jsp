@@ -3,10 +3,17 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
-<fmt:setLocale value="${sessionScope.langue}" />
+<c:choose>
+    <c:when test="${not empty sessionScope.locale}">
+        <fmt:setLocale value="${sessionScope.locale}" />
+    </c:when>
+    <c:otherwise>
+        <fmt:setLocale value="fr" />
+    </c:otherwise>
+</c:choose>
 <fmt:setBundle basename="messages" />
 
-<c:set var="pageTitle" value="Articles" scope="request" />
+<c:set var="pageTitle" value="<fmt:message key='nav.articles' />" scope="request" />
 <jsp:include page="/WEB-INF/views/includes/header.jsp" />
 <jsp:include page="/WEB-INF/views/includes/navbar.jsp" />
 
@@ -22,7 +29,7 @@
     
     <c:if test="${empty articles}">
         <div class="alert alert-info">
-            <i class="fas fa-info-circle me-2"></i>Aucun article disponible pour le moment.
+            <i class="fas fa-info-circle me-2"></i><fmt:message key="article.aucunArticle" />
         </div>
     </c:if>
     
@@ -52,11 +59,11 @@
                             </small><br>
                             <small class="text-muted">
                                 <i class="fas fa-calendar me-1"></i>
-                                <fmt:formatDate value="${article.dateCreation}" pattern="dd/MM/yyyy HH:mm" />
+                                <fmt:message key="article.date" /> <fmt:formatDate value="${article.dateCreation}" pattern="dd/MM/yyyy HH:mm" />
                             </small>
                         </div>
                         <a href="${pageContext.request.contextPath}/articles?id=${article.id}" class="btn btn-outline-primary btn-sm mt-2">
-                            Lire la suite <i class="fas fa-arrow-right ms-1"></i>
+                            <fmt:message key="article.lireSuite" /> <i class="fas fa-arrow-right ms-1"></i>
                         </a>
                     </div>
                 </div>

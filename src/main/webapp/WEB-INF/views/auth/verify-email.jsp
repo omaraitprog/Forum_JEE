@@ -1,9 +1,5 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-
-<fmt:setLocale value="${sessionScope.langue}" />
-<fmt:setBundle basename="messages" />
 
 <c:set var="pageTitle" value="Vérification Email" scope="request" />
 <jsp:include page="/WEB-INF/views/includes/header.jsp" />
@@ -21,7 +17,7 @@
                             <hr>
                             <p class="mb-0">
                                 <a href="${pageContext.request.contextPath}/login" class="btn btn-primary">
-                                    <fmt:message key="nav.connexion" />
+                                    Connexion
                                 </a>
                             </p>
                         </div>
@@ -34,7 +30,7 @@
                             <hr>
                             <p class="mb-0">
                                 <a href="${pageContext.request.contextPath}/inscription" class="btn btn-primary">
-                                    <fmt:message key="nav.inscription" />
+                                    Inscription
                                 </a>
                             </p>
                         </div>

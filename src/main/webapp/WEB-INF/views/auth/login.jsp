@@ -1,11 +1,18 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
-<fmt:setLocale value="${sessionScope.langue}" />
+<c:choose>
+    <c:when test="${not empty sessionScope.locale}">
+        <fmt:setLocale value="${sessionScope.locale}" />
+    </c:when>
+    <c:otherwise>
+        <fmt:setLocale value="fr" />
+    </c:otherwise>
+</c:choose>
 <fmt:setBundle basename="messages" />
 
-<c:set var="pageTitle" value="Connexion" scope="request" />
+<c:set var="pageTitle" value="<fmt:message key='nav.connexion' />" scope="request" />
 <jsp:include page="/WEB-INF/views/includes/header.jsp" />
 <jsp:include page="/WEB-INF/views/includes/navbar.jsp" />
 

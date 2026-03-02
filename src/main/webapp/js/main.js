@@ -1,12 +1,5 @@
 // Script JavaScript principal pour le Blog JEE
 
-// Fonction pour préserver les paramètres de l'URL lors du changement de langue
-function changeLanguage(lang) {
-    const url = new URL(window.location.href);
-    url.searchParams.set('lang', lang);
-    window.location.href = url.toString();
-}
-
 // Validation des formulaires
 document.addEventListener('DOMContentLoaded', function() {
     // Validation des mots de passe
@@ -61,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function formatDate(dateString) {
     const date = new Date(dateString);
     const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-    return date.toLocaleDateString('fr-FR', options);
+    return date.toLocaleDateString('fr', options);
 }
 
 // Fonction pour limiter le nombre de caractères dans un textarea

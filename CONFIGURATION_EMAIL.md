@@ -25,26 +25,50 @@ Si vous souhaitez activer l'envoi automatique d'emails de vérification :
 5. Cliquez sur "Générer"
 6. **Copiez le mot de passe généré** (16 caractères sans espaces)
 
-### Étape 3 : Configurer dans le code
+### Étape 3 : Configurer les variables d'environnement (Recommandé)
 
-Ouvrez le fichier : `src/main/java/com/example/forum_project/utils/EmailService.java`
+L'application utilise des variables d'environnement pour la configuration email. C'est la méthode recommandée car elle évite de stocker des identifiants dans le code.
 
-Modifiez les lignes 15-16 :
+#### Option A : Configuration dans IntelliJ IDEA (Recommandé pour le développement)
 
-```java
-private static final String SMTP_USER = "votre-email@gmail.com"; // Remplacez par votre email Gmail
-private static final String SMTP_PASSWORD = "votre-mot-de-passe-app"; // Collez le mot de passe d'application ici
-```
+1. Dans IntelliJ IDEA, allez dans **Run** → **Edit Configurations...**
+2. Sélectionnez votre configuration Tomcat
+3. Dans l'onglet **Environment variables**, ajoutez :
+   ```
+   SMTP_USER=votre-email@gmail.com
+   SMTP_PASSWORD=votre-mot-de-passe-app
+   APP_BASE_URL=http://localhost:8081/Forum_Project
+   ```
+   (Remplacez `8081` par le port que vous utilisez si différent)
 
-**Exemple :**
+4. Cliquez sur **OK** et redémarrez l'application
+
+#### Option B : Configuration via variables d'environnement système (Windows)
+
+1. Ouvrez les **Paramètres système** → **Variables d'environnement**
+2. Créez les variables suivantes :
+   - `SMTP_USER` = `votre-email@gmail.com`
+   - `SMTP_PASSWORD` = `votre-mot-de-passe-app`
+   - `APP_BASE_URL` = `http://localhost:8081/Forum_Project`
+
+3. Redémarrez IntelliJ IDEA et Tomcat
+
+#### Option C : Configuration directe dans le code (Alternative)
+
+Si vous préférez configurer directement dans le code, ouvrez le fichier : `src/main/java/com/example/forum_project/utils/EmailService.java`
+
+Modifiez les lignes 20-25 pour remplacer les valeurs par défaut :
+
 ```java
 private static final String SMTP_USER = "monblog@gmail.com";
 private static final String SMTP_PASSWORD = "abcd efgh ijkl mnop"; // Le mot de passe d'application (16 caractères)
 ```
 
+**⚠️ Attention :** Cette méthode n'est pas recommandée pour la production car elle expose les identifiants dans le code source.
+
 ### Étape 4 : Redémarrer l'application
 
-Après avoir modifié le code, redémarrez Tomcat pour que les changements prennent effet.
+Après avoir configuré les variables d'environnement ou modifié le code, redémarrez Tomcat pour que les changements prennent effet.
 
 ## Test
 
@@ -73,22 +97,28 @@ Après avoir modifié le code, redémarrez Tomcat pour que les changements prenn
 
 ## Alternative : Utiliser un autre service SMTP
 
-Si vous ne voulez pas utiliser Gmail, vous pouvez modifier les paramètres dans `EmailService.java` :
+Si vous ne voulez pas utiliser Gmail, vous pouvez configurer un autre service SMTP via les variables d'environnement :
 
 **Outlook/Hotmail :**
-```java
-private static final String SMTP_HOST = "smtp-mail.outlook.com";
-private static final int SMTP_PORT = 587;
+```
+SMTP_HOST=smtp-mail.outlook.com
+SMTP_PORT=587
+SMTP_USER=votre-email@outlook.com
+SMTP_PASSWORD=votre-mot-de-passe-app
 ```
 
 **Yahoo :**
-```java
-private static final String SMTP_HOST = "smtp.mail.yahoo.com";
-private static final int SMTP_PORT = 587;
+```
+SMTP_HOST=smtp.mail.yahoo.com
+SMTP_PORT=587
+SMTP_USER=votre-email@yahoo.com
+SMTP_PASSWORD=votre-mot-de-passe-app
 ```
 
 **Serveur SMTP personnalisé :**
-Modifiez `SMTP_HOST` et `SMTP_PORT` selon votre configuration.
+Configurez `SMTP_HOST` et `SMTP_PORT` selon votre configuration via les variables d'environnement.
+
+**Note :** Vous pouvez également modifier directement les valeurs par défaut dans `EmailService.java` (lignes 14-19), mais l'utilisation de variables d'environnement est préférable.
 
 ---
 

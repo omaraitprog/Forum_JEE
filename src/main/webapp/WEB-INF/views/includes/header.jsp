@@ -1,12 +1,19 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
-<fmt:setLocale value="${sessionScope.langue}" />
+<c:choose>
+    <c:when test="${not empty sessionScope.locale}">
+        <fmt:setLocale value="${sessionScope.locale}" />
+    </c:when>
+    <c:otherwise>
+        <fmt:setLocale value="fr" />
+    </c:otherwise>
+</c:choose>
 <fmt:setBundle basename="messages" />
 
 <!DOCTYPE html>
-<html lang="${sessionScope.langue}">
+<html lang="${not empty sessionScope.locale && sessionScope.locale.language == 'en' ? 'en' : 'fr'}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

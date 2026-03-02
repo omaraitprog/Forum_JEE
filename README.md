@@ -40,11 +40,6 @@ Un projet web complet de type Blog/Forum développé avec Java EE (Jakarta EE), 
 - Photo de profil
 - Biographie
 
-### 🌍 Internationalisation (i18n)
-- Support français et anglais
-- Changement de langue via menu déroulant
-- Conservation de la langue en session
-
 ### 🔒 Sécurité
 - Protection des routes sensibles (AuthFilter)
 - Validation et échappement des entrées utilisateur
@@ -176,11 +171,10 @@ Forum_Project/
 │       │       ├── models/           # POJO (Utilisateur, Article, Commentaire)
 │       │       ├── dao/              # Data Access Objects
 │       │       ├── services/         # Services métier
-│       │       ├── filters/          # Filtres (Auth, Langue)
+│       │       ├── filters/          # Filtres (Auth)
 │       │       └── utils/            # Utilitaires (DBConnection, EmailService)
 │       ├── resources/
-│       │   ├── messages_fr.properties  # Traductions françaises
-│       │   └── messages_en.properties  # Traductions anglaises
+│       │   └── messages.properties   # Messages de l'application
 │       └── webapp/
 │           ├── WEB-INF/
 │           │   ├── web.xml           # Configuration web
@@ -217,10 +211,6 @@ Une fois déployée, accédez à :
 4. **Création d'articles** : Créez et publiez des articles
 5. **Commentaires** : Commentez les articles
 6. **Profil** : Modifiez votre profil et changez votre mot de passe
-
-### Changement de langue
-
-Utilisez le menu déroulant dans la barre de navigation pour changer entre français et anglais.
 
 ## 🔒 Sécurité
 

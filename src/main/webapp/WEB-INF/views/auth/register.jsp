@@ -1,11 +1,18 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
-<fmt:setLocale value="${sessionScope.langue}" />
+<c:choose>
+    <c:when test="${not empty sessionScope.locale}">
+        <fmt:setLocale value="${sessionScope.locale}" />
+    </c:when>
+    <c:otherwise>
+        <fmt:setLocale value="fr" />
+    </c:otherwise>
+</c:choose>
 <fmt:setBundle basename="messages" />
 
-<c:set var="pageTitle" value="Inscription" scope="request" />
+<c:set var="pageTitle" value="<fmt:message key='nav.inscription' />" scope="request" />
 <jsp:include page="/WEB-INF/views/includes/header.jsp" />
 <jsp:include page="/WEB-INF/views/includes/navbar.jsp" />
 
@@ -73,7 +80,7 @@
                                 <fmt:message key="register.motdepasse" /> *
                             </label>
                             <input type="password" class="form-control" id="motDePasse" name="motDePasse" required minlength="6">
-                            <small class="form-text text-muted">Minimum 6 caractères</small>
+                            <small class="form-text text-muted"><fmt:message key="article.minCaracteres" /></small>
                         </div>
                         
                         <div class="mb-3">
@@ -111,6 +118,7 @@
     </div>
 </div>
 
+<c:set var="errorPasswordMismatch"><fmt:message key="erreur.motDePasseNonCorrespond" /></c:set>
 <script>
 // Validation côté client pour vérifier que les mots de passe correspondent
 document.getElementById('confirmation').addEventListener('input', function() {
@@ -118,7 +126,7 @@ document.getElementById('confirmation').addEventListener('input', function() {
     const confirmation = this.value;
     
     if (motDePasse !== confirmation) {
-        this.setCustomValidity('Les mots de passe ne correspondent pas');
+        this.setCustomValidity('${errorPasswordMismatch}');
     } else {
         this.setCustomValidity('');
     }

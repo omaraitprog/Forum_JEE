@@ -1,8 +1,15 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
-<fmt:setLocale value="${sessionScope.langue}" />
+<c:choose>
+    <c:when test="${not empty sessionScope.locale}">
+        <fmt:setLocale value="${sessionScope.locale}" />
+    </c:when>
+    <c:otherwise>
+        <fmt:setLocale value="fr" />
+    </c:otherwise>
+</c:choose>
 <fmt:setBundle basename="messages" />
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
@@ -31,24 +38,26 @@
             
             <ul class="navbar-nav">
                 <!-- Sélecteur de langue -->
-                <li class="nav-item dropdown me-3">
-                    <a class="nav-link dropdown-toggle" href="#" id="langDropdown" role="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-globe me-1"></i><fmt:message key="langue.label" />
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-globe me-1"></i>
+                        <fmt:message key="langue.changer" />
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
                         <li>
-                            <a class="dropdown-item" href="?lang=fr">
-                                <fmt:message key="langue.francais" />
+                            <a class="dropdown-item ${not empty sessionScope.locale && sessionScope.locale.language == 'fr' ? 'active' : ''}" 
+                               href="${pageContext.request.contextPath}/language?lang=fr">
+                                <i class="fas fa-flag me-2"></i><fmt:message key="langue.francais" />
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item" href="?lang=en">
-                                <fmt:message key="langue.anglais" />
+                            <a class="dropdown-item ${not empty sessionScope.locale && sessionScope.locale.language == 'en' ? 'active' : ''}" 
+                               href="${pageContext.request.contextPath}/language?lang=en">
+                                <i class="fas fa-flag me-2"></i><fmt:message key="langue.anglais" />
                             </a>
                         </li>
                     </ul>
                 </li>
-                
                 <c:choose>
                     <c:when test="${not empty sessionScope.utilisateur}">
                         <!-- Utilisateur connecté -->
@@ -68,7 +77,7 @@
                                 </li>
                                 <li>
                                     <a class="dropdown-item" href="${pageContext.request.contextPath}/articles?action=create">
-                                        <i class="fas fa-plus me-2"></i><fmt:message key="article.creer" />
+                                        <i class="fas fa-plus me-2"></i><fmt:message key="article.nouveau" />
                                     </a>
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
@@ -98,15 +107,3 @@
         </div>
     </div>
 </nav>
-
-<script>
-// Fonction pour préserver les paramètres de l'URL lors du changement de langue
-document.querySelectorAll('#langDropdown + ul a').forEach(function(link) {
-    link.addEventListener('click', function(e) {
-        e.preventDefault();
-        const url = new URL(window.location.href);
-        url.searchParams.set('lang', this.href.includes('lang=fr') ? 'fr' : 'en');
-        window.location.href = url.toString();
-    });
-});
-</script>

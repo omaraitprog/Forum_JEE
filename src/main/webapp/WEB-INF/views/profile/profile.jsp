@@ -1,11 +1,18 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
-<fmt:setLocale value="${sessionScope.langue}" />
+<c:choose>
+    <c:when test="${not empty sessionScope.locale}">
+        <fmt:setLocale value="${sessionScope.locale}" />
+    </c:when>
+    <c:otherwise>
+        <fmt:setLocale value="fr" />
+    </c:otherwise>
+</c:choose>
 <fmt:setBundle basename="messages" />
 
-<c:set var="pageTitle" value="Mon Profil" scope="request" />
+<c:set var="pageTitle" value="<fmt:message key='profil.titre' />" scope="request" />
 <jsp:include page="/WEB-INF/views/includes/header.jsp" />
 <jsp:include page="/WEB-INF/views/includes/navbar.jsp" />
 
@@ -87,7 +94,7 @@
             <!-- Changement de mot de passe -->
             <div class="card shadow">
                 <div class="card-header">
-                    <h5 class="mb-0"><fmt:message key="profil.changerMotDePasse" /></h5>
+                    <h5 class="mb-0"><fmt:message key="profil.changerMotDePasseTitre" /></h5>
                 </div>
                 <div class="card-body">
                     <form method="post" action="${pageContext.request.contextPath}/profil">
@@ -106,7 +113,7 @@
                             </label>
                             <input type="password" class="form-control" id="nouveauMotDePasse" name="nouveauMotDePasse" 
                                    required minlength="6">
-                            <small class="form-text text-muted">Minimum 6 caractères</small>
+                            <small class="form-text text-muted"><fmt:message key="article.minCaracteres" /></small>
                         </div>
                         
                         <div class="mb-3">
@@ -129,6 +136,7 @@
     </div>
 </div>
 
+<c:set var="errorPasswordMismatch"><fmt:message key="erreur.motDePasseNonCorrespond" /></c:set>
 <script>
 // Validation côté client pour vérifier que les mots de passe correspondent
 document.getElementById('confirmerMotDePasse').addEventListener('input', function() {
@@ -136,7 +144,7 @@ document.getElementById('confirmerMotDePasse').addEventListener('input', functio
     const confirmation = this.value;
     
     if (nouveauMotDePasse !== confirmation) {
-        this.setCustomValidity('Les mots de passe ne correspondent pas');
+        this.setCustomValidity('${errorPasswordMismatch}');
     } else {
         this.setCustomValidity('');
     }

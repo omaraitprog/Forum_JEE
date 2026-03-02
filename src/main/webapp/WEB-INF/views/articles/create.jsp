@@ -1,11 +1,18 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
-<fmt:setLocale value="${sessionScope.langue}" />
+<c:choose>
+    <c:when test="${not empty sessionScope.locale}">
+        <fmt:setLocale value="${sessionScope.locale}" />
+    </c:when>
+    <c:otherwise>
+        <fmt:setLocale value="fr" />
+    </c:otherwise>
+</c:choose>
 <fmt:setBundle basename="messages" />
 
-<c:set var="pageTitle" value="Nouvel Article" scope="request" />
+<c:set var="pageTitle" value="<fmt:message key='article.nouveau' />" scope="request" />
 <jsp:include page="/WEB-INF/views/includes/header.jsp" />
 <jsp:include page="/WEB-INF/views/includes/navbar.jsp" />
 
@@ -36,7 +43,7 @@
                                 <fmt:message key="article.resume" />
                             </label>
                             <textarea class="form-control" id="resume" name="resume" rows="2"></textarea>
-                            <small class="form-text text-muted">Maximum 500 caractères</small>
+                            <small class="form-text text-muted"><fmt:message key="article.maxCaracteres" /></small>
                         </div>
                         
                         <div class="mb-3">
@@ -48,23 +55,23 @@
                         
                         <div class="mb-3">
                             <label for="imageUrl" class="form-label">
-                                URL de l'image
+                                <fmt:message key="article.urlImage" />
                             </label>
                             <input type="url" class="form-control" id="imageUrl" name="imageUrl" 
                                    placeholder="https://example.com/image.jpg">
                         </div>
                         
                         <div class="mb-3">
-                            <label for="statut" class="form-label">Statut</label>
+                            <label for="statut" class="form-label"><fmt:message key="article.statut" /></label>
                             <select class="form-select" id="statut" name="statut">
-                                <option value="PUBLIE" selected>Publié</option>
-                                <option value="BROUILLON">Brouillon</option>
+                                <option value="PUBLIE" selected><fmt:message key="article.publie" /></option>
+                                <option value="BROUILLON"><fmt:message key="article.brouillon" /></option>
                             </select>
                         </div>
                         
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                             <a href="${pageContext.request.contextPath}/articles" class="btn btn-secondary">
-                                Annuler
+                                <fmt:message key="article.annuler" />
                             </a>
                             <button type="submit" class="btn btn-primary">
                                 <fmt:message key="article.publier" />
