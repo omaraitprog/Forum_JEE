@@ -71,9 +71,17 @@ SMTP_PASSWORD=votre-mot-de-passe-app
 
 ### 5. Configurer le build
 
-Railway détectera automatiquement le Dockerfile et construira l'image Docker.
+**IMPORTANT :** Pour forcer Railway à utiliser le Dockerfile au lieu de Nixpacks :
 
-**Important :** Assurez-vous que le build Maven s'exécute avant le build Docker. Railway exécutera automatiquement `mvn clean package` si un `pom.xml` est détecté.
+1. Dans votre projet Railway, allez dans les paramètres du service
+2. Dans l'onglet "Settings" → "Build & Deploy"
+3. Assurez-vous que "Builder" est défini sur **"Dockerfile"**
+4. Le chemin du Dockerfile doit être `Dockerfile` (à la racine)
+
+Si Railway essaie toujours d'utiliser Nixpacks :
+- Le fichier `railway.json` devrait forcer l'utilisation du Dockerfile
+- Le fichier `nixpacks.toml` désactive Nixpacks
+- Vérifiez que le Dockerfile est bien à la racine du projet
 
 ### 6. Initialiser la base de données
 
@@ -120,6 +128,28 @@ Et l'ajouter dans `railway.json` :
 
 ## 🐛 Dépannage
 
+### Erreur "JAVA_HOME is not defined correctly" ou "We cannot execute /usr/local/bin/java"
+
+Cette erreur se produit lorsque Railway essaie d'utiliser Nixpacks (buildpack automatique) au lieu du Dockerfile.
+
+**Solution :**
+
+1. **Dans Railway, allez dans les paramètres de votre service :**
+   - Cliquez sur votre service web
+   - Allez dans "Settings" → "Build & Deploy"
+   - Assurez-vous que "Builder" est défini sur **"Dockerfile"**
+   - Le "Dockerfile Path" doit être `Dockerfile`
+
+2. **Si le problème persiste :**
+   - Supprimez le service et recréez-le
+   - Lors de la création, sélectionnez explicitement "Dockerfile" comme builder
+   - Ou utilisez la commande Railway CLI : `railway link` puis `railway up`
+
+3. **Vérifiez que les fichiers suivants existent à la racine :**
+   - `Dockerfile` (doit être présent)
+   - `railway.json` (configuration Railway)
+   - `nixpacks.toml` (désactive Nixpacks)
+
 ### L'application ne démarre pas
 
 1. Vérifiez les logs dans Railway (onglet "Deployments" → "View Logs")
@@ -134,8 +164,9 @@ Et l'ajouter dans `railway.json` :
 
 ### Le WAR n'est pas trouvé
 
-1. Assurez-vous que `mvn clean package` s'exécute avant le build Docker
-2. Vérifiez que le fichier WAR est bien généré dans `target/`
+1. Le Dockerfile construit automatiquement le WAR avec Maven
+2. Vérifiez les logs de build pour voir si `mvn clean package` s'est exécuté correctement
+3. Vérifiez que le fichier WAR est bien copié depuis le stage de build vers Tomcat
 
 ## 📝 Notes importantes
 

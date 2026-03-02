@@ -1,0 +1,12 @@
+# Désactiver Nixpacks et forcer l'utilisation du Dockerfile
+[phases.setup]
+nixPkgs = []
+
+[phases.install]
+cmds = []
+
+[phases.build]
+cmds = []
+
+[phases.start]
+cmd = ""
