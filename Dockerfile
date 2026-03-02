@@ -1,6 +1,9 @@
 # Stage 1: Build avec Maven
 FROM maven:3.9-eclipse-temurin-21 AS build
 
+# Vérifier que Maven et Java sont disponibles
+RUN mvn -version && java -version
+
 WORKDIR /app
 
 # Copier le fichier pom.xml d'abord pour optimiser le cache Docker
@@ -13,6 +16,7 @@ RUN mvn dependency:go-offline -B || true
 COPY src ./src
 
 # Construire le projet avec Maven (pas mvnw)
+# Utiliser mvn directement depuis l'image Maven
 RUN mvn clean package -DskipTests -B
 
 # Stage 2: Déploiement avec Tomcat
