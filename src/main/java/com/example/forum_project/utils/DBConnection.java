@@ -13,9 +13,16 @@ public class DBConnection {
     private static Connection connection;
     
     // Paramètres de connexion à la base de données
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/blog_jee?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8";
-    private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "";
+    // Utilisation de variables d'environnement pour la production (Railway, etc.)
+    private static final String DB_URL = System.getenv("DATABASE_URL") != null 
+        ? System.getenv("DATABASE_URL") 
+        : "jdbc:mysql://localhost:3306/blog_jee?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8";
+    private static final String DB_USER = System.getenv("DB_USER") != null 
+        ? System.getenv("DB_USER") 
+        : "root";
+    private static final String DB_PASSWORD = System.getenv("DB_PASSWORD") != null 
+        ? System.getenv("DB_PASSWORD") 
+        : "";
     private static final String DB_DRIVER = "com.mysql.cj.jdbc.Driver";
     
     /**

@@ -10,10 +10,24 @@ import java.util.Properties;
  * Configuration pour Gmail SMTP
  */
 public class EmailService {
-    private static final String SMTP_HOST = "smtp.gmail.com";
-    private static final int SMTP_PORT = 587;
-    private static final String SMTP_USER = "votre-email@gmail.com"; // À configurer
-    private static final String SMTP_PASSWORD = "votre-mot-de-passe-app"; // À configurer (mot de passe d'application Gmail)
+    // Configuration SMTP avec support des variables d'environnement
+    private static final String SMTP_HOST = System.getenv("SMTP_HOST") != null 
+        ? System.getenv("SMTP_HOST") 
+        : "smtp.gmail.com";
+    private static final int SMTP_PORT = System.getenv("SMTP_PORT") != null 
+        ? Integer.parseInt(System.getenv("SMTP_PORT")) 
+        : 587;
+    private static final String SMTP_USER = System.getenv("SMTP_USER") != null 
+        ? System.getenv("SMTP_USER") 
+        : "votre-email@gmail.com";
+    private static final String SMTP_PASSWORD = System.getenv("SMTP_PASSWORD") != null 
+        ? System.getenv("SMTP_PASSWORD") 
+        : "votre-mot-de-passe-app";
+    
+    // URL de base de l'application (pour les liens de vérification)
+    private static final String APP_BASE_URL = System.getenv("APP_BASE_URL") != null 
+        ? System.getenv("APP_BASE_URL") 
+        : "http://localhost:8080/Forum_Project";
     
     private Session session;
     private boolean emailConfigured = false;
@@ -56,7 +70,7 @@ public class EmailService {
         // Si l'email n'est pas configuré, retourner false sans erreur
         if (!emailConfigured) {
             System.out.println("Email non configuré. L'utilisateur peut être activé manuellement via le lien : " +
-                             "http://localhost:8080/Forum_Project/verifier?token=" + token);
+                             APP_BASE_URL + "/verifier?token=" + token);
             return false;
         }
         
@@ -66,7 +80,7 @@ public class EmailService {
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(email));
             message.setSubject("Vérification de votre compte - Blog JEE");
             
-            String verificationLink = "http://localhost:8080/Forum_Project/verifier?token=" + token;
+            String verificationLink = APP_BASE_URL + "/verifier?token=" + token;
             
             String htmlContent = "<!DOCTYPE html>" +
                     "<html>" +
