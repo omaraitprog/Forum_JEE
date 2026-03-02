@@ -2,6 +2,11 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+
+# Ignorer mvnw pour éviter que Railway détecte Maven automatiquement
+# Ces fichiers sont régénérés par Maven si nécessaire
+mvnw
+mvnw.cmd
 .kotlin
 
 ### IntelliJ IDEA ###
