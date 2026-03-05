@@ -3,7 +3,7 @@
   "steps": {
     "build": {
       "commands": [
-        "export JAVA_HOME=$(dirname $(dirname $(mise which java))) && chmod +x ./mvnw && ./mvnw -DoutputFile=target/mvn-dependency-list.log -B -DskipTests clean dependency:list install"
+        "bash -c 'eval \"$(mise activate bash)\" && export JAVA_HOME=$(mise prefix java) && export PATH=\"$JAVA_HOME/bin:$PATH\" && java -version && chmod +x ./mvnw && ./mvnw -DoutputFile=target/mvn-dependency-list.log -B -DskipTests clean dependency:list install'"
       ]
     }
   }

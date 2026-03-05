@@ -25,9 +25,12 @@ public class EmailService {
         : "votre-mot-de-passe-app";
     
     // URL de base de l'application (pour les liens de vérification)
+    // En production (Railway), le WAR est déployé comme ROOT.war, donc le contexte est "/"
+    // En développement local, le contexte peut être "/Forum_Project"
+    // IMPORTANT: Configurez APP_BASE_URL dans Railway avec votre URL publique (ex: https://your-app.railway.app)
     private static final String APP_BASE_URL = System.getenv("APP_BASE_URL") != null 
         ? System.getenv("APP_BASE_URL") 
-        : "http://localhost:8080/Forum_Project";
+        : "http://localhost:8080";
     
     private Session session;
     private boolean emailConfigured = false;

@@ -3,6 +3,7 @@ builder = "dockerfile"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "catalina.sh run"
+# Le CMD du Dockerfile gère déjà le démarrage avec le port configuré
+# startCommand est optionnel ici car défini dans le Dockerfile
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10

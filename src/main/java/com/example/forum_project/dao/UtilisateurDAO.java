@@ -4,7 +4,6 @@ import com.example.forum_project.models.Utilisateur;
 import com.example.forum_project.utils.DBConnection;
 
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**

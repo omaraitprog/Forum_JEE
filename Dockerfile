@@ -33,8 +33,17 @@ WORKDIR /usr/local/tomcat
 COPY --from=build /app/target/Forum_Project-1.0-SNAPSHOT.war webapps/ROOT.war
 
 # Exposer le port 8080 (port par défaut de Tomcat)
-# Railway utilisera automatiquement la variable d'environnement PORT
+# Railway mappe automatiquement le port via la variable d'environnement PORT
 EXPOSE 8080
 
-# Tomcat démarre automatiquement
-CMD ["catalina.sh", "run"]
+# Créer un script pour configurer le port depuis la variable d'environnement PORT si nécessaire
+RUN echo '#!/bin/bash\n\
+PORT=${PORT:-8080}\n\
+if [ "$PORT" != "8080" ]; then\n\
+  sed -i "s/port=\"8080\"/port=\"$PORT\"/" /usr/local/tomcat/conf/server.xml\n\
+fi\n\
+exec catalina.sh run' > /usr/local/tomcat/start.sh && \
+    chmod +x /usr/local/tomcat/start.sh
+
+# Tomcat démarre automatiquement avec le port configuré
+CMD ["/usr/local/tomcat/start.sh"]
