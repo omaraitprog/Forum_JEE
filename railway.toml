@@ -1,9 +1,7 @@
 [build]
-builder = "dockerfile"
+builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-# Le CMD du Dockerfile gère déjà le démarrage avec le port configuré
-# startCommand est optionnel ici car défini dans le Dockerfile
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10
