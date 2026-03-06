@@ -26,6 +26,10 @@ FROM tomcat:10.1-jdk21-temurin
 ENV JAVA_HOME=/usr/local/openjdk-21
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
+# Limiter le heap Java à 256 Mo pour éviter les problèmes de limite mémoire
+ENV JAVA_OPTS="-Xmx256m -Xms256m"
+ENV CATALINA_OPTS="-Xmx256m -Xms256m"
+
 # Définir le répertoire de travail
 WORKDIR /usr/local/tomcat
 
@@ -42,6 +46,9 @@ PORT=${PORT:-8080}\n\
 if [ "$PORT" != "8080" ]; then\n\
   sed -i "s/port=\"8080\"/port=\"$PORT\"/" /usr/local/tomcat/conf/server.xml\n\
 fi\n\
+# S'assurer que les options Java sont appliquées\n\
+export JAVA_OPTS="${JAVA_OPTS:--Xmx256m -Xms256m}"\n\
+export CATALINA_OPTS="${CATALINA_OPTS:--Xmx256m -Xms256m}"\n\
 exec catalina.sh run' > /usr/local/tomcat/start.sh && \
     chmod +x /usr/local/tomcat/start.sh
 
