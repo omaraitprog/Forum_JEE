@@ -4,6 +4,7 @@ import com.example.forum_project.models.Utilisateur;
 import com.example.forum_project.utils.DBConnection;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -164,6 +165,26 @@ public class UtilisateurDAO {
             e.printStackTrace();
         }
         return false;
+    }
+    
+    /**
+     * Trouve tous les utilisateurs
+     */
+    public List<Utilisateur> findAll() {
+        List<Utilisateur> utilisateurs = new ArrayList<>();
+        String sql = "SELECT * FROM utilisateurs ORDER BY nom, prenom";
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                utilisateurs.add(mapResultSetToUtilisateur(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Erreur lors de la récupération des utilisateurs : " + e.getMessage());
+            e.printStackTrace();
+        }
+        return utilisateurs;
     }
     
     /**

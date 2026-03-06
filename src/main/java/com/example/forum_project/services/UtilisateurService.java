@@ -117,4 +117,11 @@ public class UtilisateurService {
     public Utilisateur trouverParId(int id) {
         return utilisateurDAO.findById(id);
     }
+    
+    /**
+     * Hashe un mot de passe avec BCrypt
+     */
+    public String hashPassword(String motDePasse) {
+        return BCrypt.hashpw(motDePasse, BCrypt.gensalt());
+    }
 }
