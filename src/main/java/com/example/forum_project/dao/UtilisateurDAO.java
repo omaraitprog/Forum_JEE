@@ -91,18 +91,34 @@ public class UtilisateurDAO {
             stmt.setString(5, utilisateur.getRole());
             stmt.setBoolean(6, utilisateur.isActif());
             stmt.setString(7, utilisateur.getTokenVerification());
-            stmt.setString(8, utilisateur.getBio());
+            // Utiliser setNull si bio est null pour éviter les erreurs SQL
+            if (utilisateur.getBio() != null) {
+                stmt.setString(8, utilisateur.getBio());
+            } else {
+                stmt.setNull(8, Types.VARCHAR);
+            }
             
             int rowsAffected = stmt.executeUpdate();
             
             if (rowsAffected > 0) {
                 ResultSet rs = stmt.getGeneratedKeys();
                 if (rs.next()) {
-                    return rs.getInt(1);
+                    int userId = rs.getInt(1);
+                    System.out.println("Utilisateur créé avec succès, ID: " + userId + ", Email: " + utilisateur.getEmail());
+                    return userId;
                 }
+            } else {
+                System.err.println("Aucune ligne affectée lors de la création de l'utilisateur: " + utilisateur.getEmail());
             }
         } catch (SQLException e) {
-            System.err.println("Erreur lors de la création de l'utilisateur : " + e.getMessage());
+            System.err.println("Erreur SQL lors de la création de l'utilisateur : " + e.getMessage());
+            System.err.println("Code d'erreur SQL: " + e.getErrorCode());
+            System.err.println("État SQL: " + e.getSQLState());
+            System.err.println("Email: " + utilisateur.getEmail());
+            e.printStackTrace();
+        } catch (Exception e) {
+            System.err.println("Erreur inattendue lors de la création de l'utilisateur: " + e.getMessage());
+            System.err.println("Email: " + utilisateur.getEmail());
             e.printStackTrace();
         }
         return -1;

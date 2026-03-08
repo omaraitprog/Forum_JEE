@@ -74,23 +74,36 @@ public class InscriptionServlet extends HttpServlet {
         }
         
         // Créer l'utilisateur
-        Utilisateur utilisateur = new Utilisateur(nom, prenom, email, motDePasse);
-        if (bio != null && !bio.trim().isEmpty()) {
-            utilisateur.setBio(bio);
-        }
-        
-        String token = utilisateurService.inscrire(utilisateur);
-        
-        if (token != null) {
-            // Construire le lien de vérification
-            String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + 
-                           request.getServerPort() + request.getContextPath();
-            String verificationLink = baseUrl + "/verifier?token=" + token;
+        try {
+            Utilisateur utilisateur = new Utilisateur(nom, prenom, email, motDePasse);
+            if (bio != null && !bio.trim().isEmpty()) {
+                utilisateur.setBio(bio);
+            }
             
-            request.setAttribute("succes", "Inscription réussie !");
-            request.setAttribute("verificationLink", verificationLink);
-            request.getRequestDispatcher("/WEB-INF/views/auth/register.jsp").forward(request, response);
-        } else {
+            String token = utilisateurService.inscrire(utilisateur);
+            
+            if (token != null) {
+                // Construire le lien de vérification
+                String baseUrl = request.getScheme() + "://" + request.getServerName();
+                // Ne pas inclure le port si c'est le port standard (80 pour HTTP, 443 pour HTTPS)
+                int port = request.getServerPort();
+                if (port != 80 && port != 443) {
+                    baseUrl += ":" + port;
+                }
+                baseUrl += request.getContextPath();
+                String verificationLink = baseUrl + "/verifier?token=" + token;
+                
+                request.setAttribute("succes", "Inscription réussie !");
+                request.setAttribute("verificationLink", verificationLink);
+                request.getRequestDispatcher("/WEB-INF/views/auth/register.jsp").forward(request, response);
+            } else {
+                System.err.println("Erreur: utilisateurService.inscrire() a retourné null pour l'email: " + email);
+                request.setAttribute("erreur", "Erreur lors de l'inscription. Veuillez réessayer.");
+                request.getRequestDispatcher("/WEB-INF/views/auth/register.jsp").forward(request, response);
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur lors de l'inscription pour l'email: " + email);
+            e.printStackTrace();
             request.setAttribute("erreur", "Erreur lors de l'inscription. Veuillez réessayer.");
             request.getRequestDispatcher("/WEB-INF/views/auth/register.jsp").forward(request, response);
         }

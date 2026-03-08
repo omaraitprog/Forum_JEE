@@ -25,6 +25,7 @@ public class DBConnection {
         // 1. Utiliser DATABASE_PATH si défini explicitement
         String envPath = System.getenv("DATABASE_PATH");
         if (envPath != null && !envPath.isEmpty()) {
+            ensureDirectoryExists(envPath);
             return envPath;
         }
         
@@ -32,17 +33,45 @@ public class DBConnection {
         if (System.getenv("RAILWAY_ENVIRONMENT") != null || 
             System.getenv("RAILWAY") != null ||
             System.getProperty("railway.environment") != null) {
-            // Essayer /var/data (chemin de volume Railway)
-            java.io.File dataDir = new java.io.File("/var/data");
+            // Essayer /data (chemin de volume Railway standard)
+            java.io.File dataDir = new java.io.File("/data");
             if (dataDir.exists() && dataDir.isDirectory() && dataDir.canWrite()) {
+                return "/data/blog_jee.db";
+            }
+            // Essayer /var/data (autre chemin de volume Railway)
+            java.io.File varDataDir = new java.io.File("/var/data");
+            if (varDataDir.exists() && varDataDir.isDirectory() && varDataDir.canWrite()) {
                 return "/var/data/blog_jee.db";
             }
-            // Fallback sur /var/data pour Railway
-            return "/var/data/blog_jee.db";
+            // Fallback sur /tmp pour Railway (persiste entre redéploiements)
+            ensureDirectoryExists("/tmp/blog_jee.db");
+            return "/tmp/blog_jee.db";
         }
         
         // 3. Local: utiliser le répertoire courant
         return "blog_jee.db";
+    }
+    
+    /**
+     * S'assure que le répertoire parent du fichier de base de données existe
+     * @param dbPath Chemin complet du fichier de base de données
+     */
+    private static void ensureDirectoryExists(String dbPath) {
+        try {
+            java.io.File dbFile = new java.io.File(dbPath);
+            java.io.File parentDir = dbFile.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                boolean created = parentDir.mkdirs();
+                if (created) {
+                    System.out.println("Répertoire créé: " + parentDir.getAbsolutePath());
+                } else {
+                    System.err.println("Impossible de créer le répertoire: " + parentDir.getAbsolutePath());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la vérification/création du répertoire pour: " + dbPath);
+            e.printStackTrace();
+        }
     }
     private static final String DB_URL = "jdbc:sqlite:" + DB_PATH;
     private static final String DB_DRIVER = "org.sqlite.JDBC";
@@ -81,10 +110,21 @@ public class DBConnection {
      */
     public Connection getConnection() throws SQLException {
         if (connection == null || connection.isClosed()) {
-            connection = DriverManager.getConnection(DB_URL);
-            // Activer les contraintes de clés étrangères pour SQLite
-            try (java.sql.Statement stmt = connection.createStatement()) {
-                stmt.execute("PRAGMA foreign_keys = ON");
+            try {
+                System.out.println("Connexion à la base de données: " + DB_URL);
+                System.out.println("Chemin de la base de données: " + DB_PATH);
+                connection = DriverManager.getConnection(DB_URL);
+                System.out.println("Connexion établie avec succès");
+                // Activer les contraintes de clés étrangères pour SQLite
+                try (java.sql.Statement stmt = connection.createStatement()) {
+                    stmt.execute("PRAGMA foreign_keys = ON");
+                }
+            } catch (SQLException e) {
+                System.err.println("Erreur lors de la connexion à la base de données: " + DB_URL);
+                System.err.println("Message d'erreur: " + e.getMessage());
+                System.err.println("Code d'erreur SQL: " + e.getErrorCode());
+                System.err.println("État SQL: " + e.getSQLState());
+                throw e;
             }
         }
         return connection;
