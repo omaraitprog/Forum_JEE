@@ -68,13 +68,20 @@ public class ApplicationContextListener implements ServletContextListener {
                     seedInitialData(conn);
                 } else {
                     // Vérifier aussi s'il n'y a pas d'articles (même s'il y a des utilisateurs)
+                    String forceSeed = System.getenv("FORCE_SEED");
+                    boolean shouldForceSeed = "true".equalsIgnoreCase(forceSeed);
+                    
                     try (Statement stmt = conn.createStatement();
                          java.sql.ResultSet rs = stmt.executeQuery("SELECT COUNT(*) as count FROM articles")) {
                         if (rs.next()) {
                             int articleCount = rs.getInt("count");
                             logger.info("Base de données contient " + articleCount + " articles");
-                            if (articleCount == 0) {
-                                logger.info("Aucun article trouvé dans la base, ajout des données initiales...");
+                            if (articleCount == 0 || shouldForceSeed) {
+                                if (shouldForceSeed) {
+                                    logger.info("FORCE_SEED=true détecté, re-seeding de la base de données...");
+                                } else {
+                                    logger.info("Aucun article trouvé dans la base, ajout des données initiales...");
+                                }
                                 seedInitialData(conn);
                             }
                         }
@@ -204,8 +211,13 @@ public class ApplicationContextListener implements ServletContextListener {
             return;
         }
         
+        // Vérifier si on doit forcer le re-seed (optionnel, via variable d'environnement)
+        String forceSeed = System.getenv("FORCE_SEED");
+        boolean shouldForceSeed = "true".equalsIgnoreCase(forceSeed);
+        
         // Le seed fonctionne automatiquement sur Railway et en local
         // Il ne s'exécute que si la base est vide (vérifié dans initializeDatabase)
+        // OU si FORCE_SEED=true est défini
         
         try {
             // Activer les clés étrangères
@@ -519,11 +531,31 @@ public class ApplicationContextListener implements ServletContextListener {
             conn.setAutoCommit(true);
             
             // Vérifier que les données ont été insérées
-            try (Statement stmt = conn.createStatement();
-                 java.sql.ResultSet rs = stmt.executeQuery("SELECT COUNT(*) as count FROM articles")) {
-                if (rs.next()) {
-                    int articleCount = rs.getInt("count");
-                    logger.info("Nombre d'articles dans la base: " + articleCount);
+            try (Statement stmt = conn.createStatement()) {
+                // Vérifier les utilisateurs
+                try (java.sql.ResultSet rs = stmt.executeQuery("SELECT COUNT(*) as count FROM utilisateurs")) {
+                    if (rs.next()) {
+                        int userCount = rs.getInt("count");
+                        logger.info("Nombre d'utilisateurs dans la base: " + userCount);
+                    }
+                }
+                
+                // Vérifier les articles
+                try (java.sql.ResultSet rs = stmt.executeQuery("SELECT COUNT(*) as count FROM articles")) {
+                    if (rs.next()) {
+                        int articleCount = rs.getInt("count");
+                        logger.info("Nombre d'articles dans la base: " + articleCount);
+                    }
+                }
+                
+                // Vérifier un utilisateur spécifique
+                try (java.sql.ResultSet rs = stmt.executeQuery(
+                        "SELECT email, actif, role FROM utilisateurs WHERE email = 'admin@forum.com'")) {
+                    if (rs.next()) {
+                        logger.info("Utilisateur admin@forum.com trouvé - Actif: " + rs.getInt("actif") + ", Role: " + rs.getString("role"));
+                    } else {
+                        logger.warning("Utilisateur admin@forum.com NON TROUVÉ dans la base de données !");
+                    }
                 }
             }
             
