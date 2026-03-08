@@ -164,6 +164,16 @@ Si vous obtenez des erreurs de permissions :
 
 SQLite peut verrouiller la base de données si plusieurs processus tentent d'y accéder simultanément. Sur Railway avec une seule instance, cela ne devrait pas être un problème.
 
+### Le conteneur s'arrête après le démarrage ("Stopping Container")
+
+**Cause**: Railway effectue des vérifications de santé (health checks) et arrête le conteneur si l'application ne répond pas correctement.
+
+**Solution**: 
+1. L'application inclut maintenant un endpoint de santé à `/health` qui répond avec `{"status":"ok","service":"Forum Project"}`
+2. Vérifiez que l'application répond correctement en accédant à `https://your-app.railway.app/health`
+3. Si le problème persiste, vérifiez les logs complets dans Railway pour identifier d'autres erreurs
+4. Assurez-vous que la variable d'environnement `DATABASE_PATH` est correctement configurée
+
 ## 📝 Notes importantes
 
 - ✅ Railway redéploie automatiquement à chaque push sur la branche `main`
