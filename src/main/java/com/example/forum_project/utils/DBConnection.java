@@ -32,13 +32,13 @@ public class DBConnection {
         if (System.getenv("RAILWAY_ENVIRONMENT") != null || 
             System.getenv("RAILWAY") != null ||
             System.getProperty("railway.environment") != null) {
-            // Essayer /data (chemin de volume Railway le plus courant)
-            java.io.File dataDir = new java.io.File("/data");
+            // Essayer /var/data (chemin de volume Railway)
+            java.io.File dataDir = new java.io.File("/var/data");
             if (dataDir.exists() && dataDir.isDirectory() && dataDir.canWrite()) {
-                return "/data/blog_jee.db";
+                return "/var/data/blog_jee.db";
             }
-            // Fallback sur /tmp pour Railway
-            return "/tmp/blog_jee.db";
+            // Fallback sur /var/data pour Railway
+            return "/var/data/blog_jee.db";
         }
         
         // 3. Local: utiliser le répertoire courant
