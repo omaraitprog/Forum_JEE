@@ -4,6 +4,7 @@ import com.example.forum_project.utils.DBConnection;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -211,13 +212,9 @@ public class ApplicationContextListener implements ServletContextListener {
             return;
         }
         
-        // Vérifier si on doit forcer le re-seed (optionnel, via variable d'environnement)
-        String forceSeed = System.getenv("FORCE_SEED");
-        boolean shouldForceSeed = "true".equalsIgnoreCase(forceSeed);
-        
         // Le seed fonctionne automatiquement sur Railway et en local
         // Il ne s'exécute que si la base est vide (vérifié dans initializeDatabase)
-        // OU si FORCE_SEED=true est défini
+        // OU si FORCE_SEED=true est défini (géré dans initializeDatabase)
         
         try {
             // Activer les clés étrangères
@@ -234,7 +231,11 @@ public class ApplicationContextListener implements ServletContextListener {
             logger.info("Insertion des utilisateurs...");
             String userSql = "INSERT INTO utilisateurs (nom, prenom, email, mot_de_passe, role, actif, bio, date_inscription) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now', ?))";
             try (java.sql.PreparedStatement pstmt = conn.prepareStatement(userSql)) {
-                String passwordHash = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+                // Générer le hash BCrypt pour "password123" dynamiquement
+                // Cela garantit que le hash est correct et compatible
+                String plainPassword = "password123";
+                String passwordHash = BCrypt.hashpw(plainPassword, BCrypt.gensalt());
+                logger.info("Hash BCrypt généré pour le mot de passe: " + passwordHash.substring(0, 20) + "...");
                 
                 // Admin Principal
                 pstmt.setString(1, "Admin");
