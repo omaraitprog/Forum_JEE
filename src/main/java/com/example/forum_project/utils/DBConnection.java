@@ -15,11 +15,35 @@ public class DBConnection {
     // Paramètres de connexion à la base de données SQLite
     // Utilisation de variables d'environnement pour la production
     // Sur Railway, utilise /tmp pour la persistance ou un chemin de volume
-    private static final String DB_PATH = System.getenv("DATABASE_PATH") != null 
-        ? System.getenv("DATABASE_PATH") 
-        : (System.getenv("RAILWAY_ENVIRONMENT") != null 
-            ? "/tmp/blog_jee.db"  // Railway: utilise /tmp pour persistance
-            : "blog_jee.db");     // Local: utilise le répertoire courant
+    private static final String DB_PATH = getDatabasePath();
+    
+    /**
+     * Détermine le chemin de la base de données en fonction de l'environnement
+     * Priorité: DATABASE_PATH > Railway volume (/data) > /tmp > local
+     */
+    private static String getDatabasePath() {
+        // 1. Utiliser DATABASE_PATH si défini explicitement
+        String envPath = System.getenv("DATABASE_PATH");
+        if (envPath != null && !envPath.isEmpty()) {
+            return envPath;
+        }
+        
+        // 2. Détecter Railway et essayer les chemins de volume courants
+        if (System.getenv("RAILWAY_ENVIRONMENT") != null || 
+            System.getenv("RAILWAY") != null ||
+            System.getProperty("railway.environment") != null) {
+            // Essayer /data (chemin de volume Railway le plus courant)
+            java.io.File dataDir = new java.io.File("/data");
+            if (dataDir.exists() && dataDir.isDirectory() && dataDir.canWrite()) {
+                return "/data/blog_jee.db";
+            }
+            // Fallback sur /tmp pour Railway
+            return "/tmp/blog_jee.db";
+        }
+        
+        // 3. Local: utiliser le répertoire courant
+        return "blog_jee.db";
+    }
     private static final String DB_URL = "jdbc:sqlite:" + DB_PATH;
     private static final String DB_DRIVER = "org.sqlite.JDBC";
     

@@ -46,22 +46,35 @@ Dans les paramètres de votre service web sur Railway, ajoutez les variables d'e
 
 #### Variables de base de données SQLite
 
-**Option A: Utiliser `/tmp` (par défaut)**
-```
-DATABASE_PATH=/tmp/blog_jee.db
-```
+**✅ Détection automatique (recommandé)**
 
-**Option B: Utiliser un volume Railway (recommandé pour production)**
+L'application détecte automatiquement l'environnement Railway et utilise :
+1. **`DATABASE_PATH`** si défini explicitement (priorité la plus haute)
+2. **`/data/blog_jee.db`** si un volume Railway est monté à `/data` (détection automatique)
+3. **`/tmp/blog_jee.db`** comme fallback sur Railway
+4. **`blog_jee.db`** en local
 
-1. Créez un volume Railway :
+**Option A: Laisser la détection automatique (recommandé pour débuter)**
+
+Si vous avez attaché un volume Railway à `/data`, l'application l'utilisera automatiquement. **Aucune configuration requise !**
+
+**Option B: Configurer manuellement `DATABASE_PATH` (pour un chemin personnalisé)**
+
+1. Créez un volume Railway (si pas déjà fait) :
    - Dans votre projet Railway, cliquez sur "New" → "Volume"
    - Nommez-le `database-volume`
-   - Notez le chemin du volume (ex: `/data`)
+   - Railway affichera le chemin de montage (généralement `/data`)
 
-2. Configurez la variable :
+2. Attachez le volume à votre service web :
+   - Dans les paramètres de votre service web
+   - Onglet "Settings" → "Volumes"
+   - Cliquez sur "Attach Volume" et sélectionnez le volume créé
+
+3. Configurez la variable d'environnement (optionnel, seulement si le chemin diffère de `/data`) :
    ```
    DATABASE_PATH=/data/blog_jee.db
    ```
+   **Note:** Remplacez `/data` par le chemin exact affiché par Railway si différent. Le chemin le plus courant est `/data`.
 
 #### Variables d'email (optionnel)
 
@@ -110,18 +123,18 @@ Pour une persistance garantie des données :
 1. **Créer un volume** :
    - Dans Railway, cliquez sur "New" → "Volume"
    - Nommez-le (ex: `database-volume`)
-   - Notez le chemin (généralement `/data` ou `/volumes/database-volume`)
+   - Railway affichera le chemin de montage (généralement `/data`)
 
-2. **Configurer la variable d'environnement** :
+2. **Attacher le volume au service** :
+   - Dans les paramètres de votre service web
+   - Onglet "Settings" → "Volumes"
+   - Cliquez sur "Attach Volume" et sélectionnez le volume créé
+
+3. **Configurer la variable d'environnement** :
    ```
    DATABASE_PATH=/data/blog_jee.db
    ```
-   (Remplacez `/data` par le chemin de votre volume)
-
-3. **Attacher le volume au service** :
-   - Dans les paramètres du service web
-   - Onglet "Settings" → "Volumes"
-   - Attachez le volume créé
+   **Important:** Utilisez le chemin exact affiché par Railway lors de la création du volume. Le chemin le plus courant est `/data`, mais vérifiez dans l'interface Railway.
 
 ### Port personnalisé
 
