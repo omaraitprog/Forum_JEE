@@ -62,10 +62,25 @@ public class ApplicationContextListener implements ServletContextListener {
             } else {
                 logger.info("Base de données déjà initialisée");
                 
-                // Check if database is empty and seed if needed (works on Railway and local)
+                // Check if database is empty (no users OR no articles) and seed if needed
                 if (isDatabaseEmpty(conn)) {
                     logger.info("Base de données vide détectée, ajout des données initiales...");
                     seedInitialData(conn);
+                } else {
+                    // Vérifier aussi s'il n'y a pas d'articles (même s'il y a des utilisateurs)
+                    try (Statement stmt = conn.createStatement();
+                         java.sql.ResultSet rs = stmt.executeQuery("SELECT COUNT(*) as count FROM articles")) {
+                        if (rs.next()) {
+                            int articleCount = rs.getInt("count");
+                            logger.info("Base de données contient " + articleCount + " articles");
+                            if (articleCount == 0) {
+                                logger.info("Aucun article trouvé dans la base, ajout des données initiales...");
+                                seedInitialData(conn);
+                            }
+                        }
+                    } catch (SQLException e) {
+                        logger.warning("Erreur lors de la vérification des articles: " + e.getMessage());
+                    }
                 }
             }
         } catch (SQLException e) {
