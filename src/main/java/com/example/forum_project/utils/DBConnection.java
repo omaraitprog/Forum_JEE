@@ -5,25 +5,23 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 /**
- * Classe utilitaire pour la gestion de la connexion à la base de données MySQL
+ * Classe utilitaire pour la gestion de la connexion à la base de données SQLite
  * Implémente le pattern Singleton pour une seule instance de connexion
  */
 public class DBConnection {
     private static DBConnection instance;
     private static Connection connection;
     
-    // Paramètres de connexion à la base de données
-    // Utilisation de variables d'environnement pour la production (Railway, etc.)
-    private static final String DB_URL = System.getenv("DATABASE_URL") != null 
-        ? System.getenv("DATABASE_URL") 
-        : "jdbc:mysql://localhost:3306/blog_jee?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8";
-    private static final String DB_USER = System.getenv("DB_USER") != null 
-        ? System.getenv("DB_USER") 
-        : "root";
-    private static final String DB_PASSWORD = System.getenv("DB_PASSWORD") != null 
-        ? System.getenv("DB_PASSWORD") 
-        : "";
-    private static final String DB_DRIVER = "com.mysql.cj.jdbc.Driver";
+    // Paramètres de connexion à la base de données SQLite
+    // Utilisation de variables d'environnement pour la production
+    // Sur Railway, utilise /tmp pour la persistance ou un chemin de volume
+    private static final String DB_PATH = System.getenv("DATABASE_PATH") != null 
+        ? System.getenv("DATABASE_PATH") 
+        : (System.getenv("RAILWAY_ENVIRONMENT") != null 
+            ? "/tmp/blog_jee.db"  // Railway: utilise /tmp pour persistance
+            : "blog_jee.db");     // Local: utilise le répertoire courant
+    private static final String DB_URL = "jdbc:sqlite:" + DB_PATH;
+    private static final String DB_DRIVER = "org.sqlite.JDBC";
     
     /**
      * Constructeur privé pour empêcher l'instanciation directe
@@ -32,7 +30,7 @@ public class DBConnection {
         try {
             Class.forName(DB_DRIVER);
         } catch (ClassNotFoundException e) {
-            System.err.println("Erreur : Driver MySQL non trouvé");
+            System.err.println("Erreur : Driver SQLite non trouvé");
             e.printStackTrace();
         }
     }
@@ -59,7 +57,11 @@ public class DBConnection {
      */
     public Connection getConnection() throws SQLException {
         if (connection == null || connection.isClosed()) {
-            connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+            connection = DriverManager.getConnection(DB_URL);
+            // Activer les contraintes de clés étrangères pour SQLite
+            try (java.sql.Statement stmt = connection.createStatement()) {
+                stmt.execute("PRAGMA foreign_keys = ON");
+            }
         }
         return connection;
     }

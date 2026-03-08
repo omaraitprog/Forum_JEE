@@ -134,7 +134,7 @@ public class ArticleDAO {
      */
     public boolean update(Article article) {
         String sql = "UPDATE articles SET titre = ?, contenu = ?, resume = ?, statut = ?, " +
-                     "image_url = ?, date_modification = CURRENT_TIMESTAMP WHERE id = ?";
+                     "image_url = ?, date_modification = datetime('now') WHERE id = ?";
         
         try (Connection conn = DBConnection.getInstance().getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {

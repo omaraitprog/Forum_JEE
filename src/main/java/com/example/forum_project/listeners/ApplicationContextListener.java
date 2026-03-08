@@ -5,15 +5,22 @@ import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Enumeration;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Listener pour nettoyer les ressources lors de l'arrêt de l'application
- * Résout les problèmes de fuite de mémoire liés au pilote JDBC MySQL
+ * Nettoie les ressources JDBC lors de l'arrêt de l'application
+ * Initialise la base de données SQLite si les tables n'existent pas
  */
 @WebListener
 public class ApplicationContextListener implements ServletContextListener {
@@ -23,6 +30,108 @@ public class ApplicationContextListener implements ServletContextListener {
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         logger.info("Application démarrée");
+        
+        // Initialiser la base de données SQLite si nécessaire
+        try {
+            initializeDatabase();
+        } catch (Exception e) {
+            logger.severe("Erreur lors de l'initialisation de la base de données: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Initialise la base de données en créant les tables si elles n'existent pas
+     */
+    private void initializeDatabase() throws SQLException {
+        try (java.sql.Connection conn = DBConnection.getInstance().getConnection()) {
+            // Vérifier si la table utilisateurs existe
+            boolean tableExists = false;
+            try (Statement stmt = conn.createStatement();
+                 java.sql.ResultSet rs = stmt.executeQuery(
+                     "SELECT name FROM sqlite_master WHERE type='table' AND name='utilisateurs'")) {
+                tableExists = rs.next();
+            }
+            
+            if (!tableExists) {
+                logger.info("Initialisation de la base de données SQLite...");
+                createTables(conn);
+                logger.info("Base de données initialisée avec succès");
+            } else {
+                logger.info("Base de données déjà initialisée");
+            }
+        }
+    }
+    
+    /**
+     * Crée les tables de la base de données
+     */
+    private void createTables(java.sql.Connection conn) throws SQLException {
+        String schema = """
+            -- Table des utilisateurs
+            CREATE TABLE IF NOT EXISTS utilisateurs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nom VARCHAR(100) NOT NULL,
+                prenom VARCHAR(100) NOT NULL,
+                email VARCHAR(150) UNIQUE NOT NULL,
+                mot_de_passe VARCHAR(255) NOT NULL,
+                role TEXT DEFAULT 'MEMBRE' CHECK(role IN ('MEMBRE','ADMIN')),
+                actif INTEGER DEFAULT 0,
+                token_verification VARCHAR(255),
+                date_inscription DATETIME DEFAULT CURRENT_TIMESTAMP,
+                photo_profil VARCHAR(255),
+                bio TEXT
+            );
+            
+            CREATE INDEX IF NOT EXISTS idx_email ON utilisateurs(email);
+            CREATE INDEX IF NOT EXISTS idx_token ON utilisateurs(token_verification);
+            
+            -- Table des articles
+            CREATE TABLE IF NOT EXISTS articles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                titre VARCHAR(255) NOT NULL,
+                contenu TEXT NOT NULL,
+                resume VARCHAR(500),
+                auteur_id INTEGER NOT NULL,
+                date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
+                date_modification DATETIME NULL,
+                statut TEXT DEFAULT 'PUBLIE' CHECK(statut IN ('BROUILLON','PUBLIE','ARCHIVE')),
+                image_url VARCHAR(255),
+                FOREIGN KEY (auteur_id) REFERENCES utilisateurs(id) ON DELETE CASCADE
+            );
+            
+            CREATE INDEX IF NOT EXISTS idx_auteur ON articles(auteur_id);
+            CREATE INDEX IF NOT EXISTS idx_statut ON articles(statut);
+            CREATE INDEX IF NOT EXISTS idx_date_creation ON articles(date_creation);
+            
+            -- Table des commentaires
+            CREATE TABLE IF NOT EXISTS commentaires (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                contenu TEXT NOT NULL,
+                article_id INTEGER NOT NULL,
+                auteur_id INTEGER NOT NULL,
+                date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
+                approuve INTEGER DEFAULT 1,
+                FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE,
+                FOREIGN KEY (auteur_id) REFERENCES utilisateurs(id) ON DELETE CASCADE
+            );
+            
+            CREATE INDEX IF NOT EXISTS idx_article ON commentaires(article_id);
+            CREATE INDEX IF NOT EXISTS idx_auteur ON commentaires(auteur_id);
+            """;
+        
+        try (Statement stmt = conn.createStatement()) {
+            // Activer les clés étrangères
+            stmt.execute("PRAGMA foreign_keys = ON");
+            // Exécuter le schéma
+            String[] statements = schema.split(";");
+            for (String sql : statements) {
+                sql = sql.trim();
+                if (!sql.isEmpty() && !sql.startsWith("--")) {
+                    stmt.execute(sql);
+                }
+            }
+        }
     }
     
     @Override
@@ -38,18 +147,7 @@ public class ApplicationContextListener implements ServletContextListener {
             logger.warning("Erreur lors de la fermeture de la connexion à la base de données: " + e.getMessage());
         }
         
-        // 2. Arrêter le thread de nettoyage des connexions abandonnées MySQL
-        try {
-            Class<?> clazz = Class.forName("com.mysql.cj.jdbc.AbandonedConnectionCleanupThread");
-            java.lang.reflect.Method method = clazz.getMethod("checkedShutdown");
-            method.invoke(null);
-            logger.info("Thread de nettoyage MySQL arrêté");
-        } catch (Exception e) {
-            // Ignorer si la classe n'existe pas ou si la méthode n'est pas disponible
-            logger.fine("Impossible d'arrêter le thread de nettoyage MySQL (peut être normal): " + e.getMessage());
-        }
-        
-        // 3. Désenregistrer tous les pilotes JDBC
+        // 2. Désenregistrer tous les pilotes JDBC
         Enumeration<Driver> drivers = DriverManager.getDrivers();
         while (drivers.hasMoreElements()) {
             Driver driver = drivers.nextElement();

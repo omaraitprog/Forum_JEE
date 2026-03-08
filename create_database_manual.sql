@@ -1,56 +1,53 @@
 -- Script SQL simplifié pour créer la base de données manuellement
--- Copiez-collez ce contenu dans MySQL Workbench ou phpMyAdmin
-
-CREATE DATABASE IF NOT EXISTS blog_jee CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE blog_jee;
+-- Copiez-collez ce contenu dans un client SQLite (DB Browser for SQLite, etc.)
 
 -- Table des utilisateurs
 CREATE TABLE utilisateurs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     nom VARCHAR(100) NOT NULL,
     prenom VARCHAR(100) NOT NULL,
     email VARCHAR(150) UNIQUE NOT NULL,
     mot_de_passe VARCHAR(255) NOT NULL,
-    role ENUM('MEMBRE','ADMIN') DEFAULT 'MEMBRE',
-    actif BOOLEAN DEFAULT FALSE,
+    role TEXT DEFAULT 'MEMBRE' CHECK(role IN ('MEMBRE','ADMIN')),
+    actif INTEGER DEFAULT 0,
     token_verification VARCHAR(255),
-    date_inscription TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    date_inscription DATETIME DEFAULT CURRENT_TIMESTAMP,
     photo_profil VARCHAR(255),
     bio TEXT,
     INDEX idx_email (email),
     INDEX idx_token (token_verification)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+);
 
 -- Table des articles
 CREATE TABLE articles (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     titre VARCHAR(255) NOT NULL,
     contenu TEXT NOT NULL,
     resume VARCHAR(500),
-    auteur_id INT NOT NULL,
-    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    date_modification TIMESTAMP NULL,
-    statut ENUM('BROUILLON','PUBLIE','ARCHIVE') DEFAULT 'PUBLIE',
+    auteur_id INTEGER NOT NULL,
+    date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
+    date_modification DATETIME NULL,
+    statut TEXT DEFAULT 'PUBLIE' CHECK(statut IN ('BROUILLON','PUBLIE','ARCHIVE')),
     image_url VARCHAR(255),
     FOREIGN KEY (auteur_id) REFERENCES utilisateurs(id) ON DELETE CASCADE,
     INDEX idx_auteur (auteur_id),
     INDEX idx_statut (statut),
     INDEX idx_date_creation (date_creation)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+);
 
 -- Table des commentaires
 CREATE TABLE commentaires (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     contenu TEXT NOT NULL,
-    article_id INT NOT NULL,
-    auteur_id INT NOT NULL,
-    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    approuve BOOLEAN DEFAULT TRUE,
+    article_id INTEGER NOT NULL,
+    auteur_id INTEGER NOT NULL,
+    date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
+    approuve INTEGER DEFAULT 1,
     FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE,
     FOREIGN KEY (auteur_id) REFERENCES utilisateurs(id) ON DELETE CASCADE,
     INDEX idx_article (article_id),
     INDEX idx_auteur (auteur_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+);
 
 -- Données de test
 -- Mots de passe hashés avec BCrypt (mot de passe = "password123" pour tous)
@@ -58,11 +55,11 @@ CREATE TABLE commentaires (
 
 -- Utilisateur 1 (Admin, actif)
 INSERT INTO utilisateurs (nom, prenom, email, mot_de_passe, role, actif, bio) VALUES
-('Dupont', 'Jean', 'admin@blog.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'ADMIN', TRUE, 'Administrateur du blog');
+('Dupont', 'Jean', 'admin@blog.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'ADMIN', 1, 'Administrateur du blog');
 
 -- Utilisateur 2 (Membre, actif)
 INSERT INTO utilisateurs (nom, prenom, email, mot_de_passe, role, actif, bio) VALUES
-('Martin', 'Sophie', 'sophie@blog.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'MEMBRE', TRUE, 'Passionnée de technologie et de développement web');
+('Martin', 'Sophie', 'sophie@blog.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'MEMBRE', 1, 'Passionnée de technologie et de développement web');
 
 -- Articles de test
 INSERT INTO articles (titre, contenu, resume, auteur_id, statut, date_creation) VALUES
@@ -73,7 +70,7 @@ Notre blog couvre de nombreux sujets intéressants, notamment la technologie, le
 
 N''hésitez pas à commenter les articles et à partager vos propres réflexions avec la communauté !',
 'Un message de bienvenue pour tous les nouveaux membres de notre communauté de blog.',
-1, 'PUBLIE', NOW() - INTERVAL 5 DAY),
+1, 'PUBLIE', datetime('now', '-5 days')),
 
 ('Introduction à Java EE', 
 'Java Enterprise Edition (Java EE) est une plateforme de développement d''applications d''entreprise. Elle fournit un ensemble d''API et de technologies pour créer des applications distribuées, robustes et scalables.
@@ -86,7 +83,7 @@ Dans cet article, nous allons explorer les concepts fondamentaux de Java EE, not
 
 Java EE facilite le développement d''applications complexes en fournissant des composants réutilisables et des services intégrés.',
 'Découvrez les bases de Java EE et comment cette plateforme peut vous aider à développer des applications d''entreprise.',
-1, 'PUBLIE', NOW() - INTERVAL 4 DAY),
+1, 'PUBLIE', datetime('now', '-4 days')),
 
 ('Les meilleures pratiques de sécurité web', 
 'La sécurité web est un aspect crucial du développement d''applications modernes. Voici quelques bonnes pratiques essentielles :
@@ -103,7 +100,7 @@ Java EE facilite le développement d''applications complexes en fournissant des 
 
 En suivant ces pratiques, vous pouvez considérablement améliorer la sécurité de vos applications web.',
 'Apprenez les meilleures pratiques de sécurité pour protéger vos applications web contre les menaces courantes.',
-2, 'PUBLIE', NOW() - INTERVAL 3 DAY),
+2, 'PUBLIE', datetime('now', '-3 days')),
 
 ('Guide complet du développement MVC', 
 'Le pattern Model-View-Controller (MVC) est l''un des patterns d''architecture les plus utilisés dans le développement web. Il sépare l''application en trois composants principaux :
@@ -116,25 +113,26 @@ En suivant ces pratiques, vous pouvez considérablement améliorer la sécurité
 
 Cette séparation des responsabilités facilite la maintenance, les tests et l''évolution de l''application.',
 'Comprenez le pattern MVC et comment l''implémenter efficacement dans vos projets web.',
-2, 'PUBLIE', NOW() - INTERVAL 2 DAY),
+2, 'PUBLIE', datetime('now', '-2 days')),
 
-('MySQL et la gestion des bases de données', 
-'MySQL est l''un des systèmes de gestion de bases de données relationnelles les plus populaires. Il est largement utilisé dans le développement web pour stocker et gérer les données des applications.
+('SQLite et la gestion des bases de données', 
+'SQLite est l''un des systèmes de gestion de bases de données relationnelles les plus populaires. Il est largement utilisé dans le développement web pour stocker et gérer les données des applications.
 
-Quelques points clés sur MySQL :
+Quelques points clés sur SQLite :
 - Support des transactions ACID
-- Haute performance et scalabilité
+- Haute performance et légèreté
 - Support des index pour optimiser les requêtes
 - Gestion des relations entre tables via les clés étrangères
+- Base de données embarquée, pas besoin de serveur séparé
 
-Dans ce blog, nous utilisons MySQL pour stocker les utilisateurs, articles et commentaires. La structure relationnelle permet de maintenir l''intégrité des données et de faciliter les requêtes complexes.',
-'Découvrez comment MySQL peut être utilisé efficacement dans vos projets web pour gérer les données.',
-1, 'PUBLIE', NOW() - INTERVAL 1 DAY);
+Dans ce blog, nous utilisons SQLite pour stocker les utilisateurs, articles et commentaires. La structure relationnelle permet de maintenir l''intégrité des données et de faciliter les requêtes complexes.',
+'Découvrez comment SQLite peut être utilisé efficacement dans vos projets web pour gérer les données.',
+1, 'PUBLIE', datetime('now', '-1 day'));
 
 -- Commentaires de test
 INSERT INTO commentaires (contenu, article_id, auteur_id, date_creation) VALUES
-('Excellent article ! Merci pour ce partage.', 1, 2, NOW() - INTERVAL 4 DAY),
-('Très intéressant, j''ai appris beaucoup de choses sur Java EE.', 2, 2, NOW() - INTERVAL 3 DAY),
-('La sécurité est effectivement cruciale. Merci pour ces conseils pratiques.', 3, 1, NOW() - INTERVAL 2 DAY),
-('Le pattern MVC est vraiment essentiel pour bien structurer une application.', 4, 1, NOW() - INTERVAL 1 DAY),
-('MySQL est effectivement un excellent choix pour ce type de projet.', 5, 2, NOW() - INTERVAL 12 HOUR);
+('Excellent article ! Merci pour ce partage.', 1, 2, datetime('now', '-4 days')),
+('Très intéressant, j''ai appris beaucoup de choses sur Java EE.', 2, 2, datetime('now', '-3 days')),
+('La sécurité est effectivement cruciale. Merci pour ces conseils pratiques.', 3, 1, datetime('now', '-2 days')),
+('Le pattern MVC est vraiment essentiel pour bien structurer une application.', 4, 1, datetime('now', '-1 day')),
+('SQLite est effectivement un excellent choix pour ce type de projet.', 5, 2, datetime('now', '-12 hours'));

@@ -1,9 +1,8 @@
 -- Script SQL pour ajouter des données dans la base de données après le hosting
 -- Utilisez ce script pour insérer des données de test ou des données initiales
 -- 
--- IMPORTANT: Assurez-vous d'être connecté à la bonne base de données
--- Sur Railway: Utilisez l'onglet "Query" dans l'interface MySQL de Railway
--- Ou connectez-vous via un client MySQL avec les credentials de Railway
+-- IMPORTANT: Assurez-vous d'être connecté à la bonne base de données SQLite
+-- Vous pouvez utiliser un client SQLite comme DB Browser for SQLite ou exécuter via Java
 
 -- ============================================
 -- INSERTION D'UTILISATEURS
@@ -16,12 +15,12 @@
 -- Exemple: Ajouter un nouvel administrateur
 INSERT INTO utilisateurs (nom, prenom, email, mot_de_passe, role, actif, bio) 
 VALUES 
-('Admin', 'Principal', 'admin@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'ADMIN', TRUE, 'Administrateur principal du forum');
+('Admin', 'Principal', 'admin@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'ADMIN', 1, 'Administrateur principal du forum');
 
 -- Exemple: Ajouter un nouveau membre
 INSERT INTO utilisateurs (nom, prenom, email, mot_de_passe, role, actif, bio) 
 VALUES 
-('Dupont', 'Marie', 'marie.dupont@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'MEMBRE', TRUE, 'Passionnée de développement web');
+('Dupont', 'Marie', 'marie.dupont@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'MEMBRE', 1, 'Passionnée de développement web');
 
 -- ============================================
 -- INSERTION D'ARTICLES
@@ -40,7 +39,7 @@ Le contenu peut contenir plusieurs paragraphes et être formaté comme vous le s
 'Un résumé court de l''article qui apparaîtra dans la liste des articles.',
 1, -- Remplacez par l'ID d'un utilisateur existant
 'PUBLIE', 
-NOW());
+datetime('now'));
 
 -- Exemple: Ajouter un autre article
 INSERT INTO articles (titre, contenu, resume, auteur_id, statut, date_creation) 
@@ -59,7 +58,7 @@ Ces technologies forment la base d''une application web moderne et performante.'
 'Découvrez les technologies essentielles pour développer des applications web modernes.',
 1, -- Remplacez par l'ID d'un utilisateur existant
 'PUBLIE', 
-NOW());
+datetime('now'));
 
 -- ============================================
 -- INSERTION DE COMMENTAIRES
@@ -75,8 +74,8 @@ VALUES
 ('Excellent article ! Merci pour ces informations utiles.',
 1, -- Remplacez par l'ID d'un article existant
 2, -- Remplacez par l'ID d'un utilisateur existant
-NOW(),
-TRUE);
+datetime('now'),
+1);
 
 -- ============================================
 -- REQUÊTES UTILES POUR VÉRIFIER LES DONNÉES

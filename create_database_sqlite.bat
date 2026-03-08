@@ -3,8 +3,6 @@ echo ========================================
 echo Creation de la base de donnees SQLite blog_jee
 echo ========================================
 echo.
-echo Ce script utilise SQLite (pas de serveur requis)
-echo.
 
 REM Vérifier si sqlite3 est disponible
 where sqlite3 >nul 2>&1
@@ -34,9 +32,20 @@ if %ERRORLEVEL% EQU 0 (
     echo.
     echo Fichier cree: blog_jee.db
     echo.
+    echo Vous pouvez maintenant utiliser:
+    echo - Email: admin@blog.com
+    echo - Mot de passe: password123
+    echo.
 ) else (
     echo.
+    echo ========================================
     echo ERREUR lors de la creation de la base
+    echo ========================================
+    echo.
+    echo Verifiez que:
+    echo 1. sqlite3.exe est accessible
+    echo 2. Le fichier schema.sql existe
+    echo 3. Vous avez les droits d'ecriture dans ce dossier
     echo.
     echo Note: La base de donnees sera creee automatiquement
     echo lors du premier lancement de l'application si elle n'existe pas.

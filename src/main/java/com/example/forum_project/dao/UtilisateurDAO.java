@@ -154,7 +154,7 @@ public class UtilisateurDAO {
      * Active un utilisateur et supprime son token de vérification
      */
     public boolean activerUtilisateur(int userId) {
-        String sql = "UPDATE utilisateurs SET actif = TRUE, token_verification = NULL WHERE id = ?";
+        String sql = "UPDATE utilisateurs SET actif = 1, token_verification = NULL WHERE id = ?";
         try (Connection conn = DBConnection.getInstance().getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             

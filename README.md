@@ -1,6 +1,6 @@
 # Blog/Forum JEE - Projet Java Enterprise Edition
 
-Un projet web complet de type Blog/Forum développé avec Java EE (Jakarta EE), utilisant Servlets, JSP, JSTL, MySQL et Maven.
+Un projet web complet de type Blog/Forum développé avec Java EE (Jakarta EE), utilisant Servlets, JSP, JSTL, SQLite et Maven.
 
 ## 📋 Table des matières
 
@@ -54,7 +54,7 @@ Un projet web complet de type Blog/Forum développé avec Java EE (Jakarta EE), 
 - **Servlets** - Contrôleurs
 - **JSP** - Vues
 - **JSTL** - Bibliothèque de tags
-- **MySQL** - Base de données
+- **SQLite** - Base de données
 - **Maven** - Gestion des dépendances
 - **Apache Tomcat 9+** - Serveur d'application
 - **Bootstrap 5** - Framework CSS
@@ -69,7 +69,7 @@ Avant de commencer, assurez-vous d'avoir installé :
 - **Java JDK 21** ou supérieur
 - **Apache Maven 3.6+**
 - **Apache Tomcat 9+** ou supérieur
-- **MySQL 8.0+**
+- **SQLite** (inclus dans le projet via JDBC driver)
 - **IDE** (IntelliJ IDEA, Eclipse, ou VS Code)
 
 ## 🚀 Installation
@@ -80,28 +80,33 @@ Avant de commencer, assurez-vous d'avoir installé :
 cd Forum_Project
 ```
 
-### 2. Créer la base de données MySQL
+### 2. Créer la base de données SQLite
 
-Connectez-vous à MySQL et exécutez le script `schema.sql` :
+**Option A: Automatique (Recommandé)**
+- La base de données sera créée automatiquement au premier démarrage de l'application
+- Les tables seront initialisées automatiquement
 
+**Option B: Manuel**
+- Utilisez un client SQLite (DB Browser for SQLite, etc.)
+- Exécutez le script `schema.sql`
+
+Ou utilisez la ligne de commande :
 ```bash
-mysql -u root -p < schema.sql
+sqlite3 blog_jee.db < schema.sql
 ```
 
-Ou via MySQL Workbench :
-1. Ouvrez MySQL Workbench
-2. Connectez-vous à votre serveur MySQL
-3. Ouvrez le fichier `schema.sql`
-4. Exécutez le script
+### 3. Configurer la connexion à la base de données (Optionnel)
 
-### 3. Configurer la connexion à la base de données
+Par défaut, la base de données sera créée dans `blog_jee.db` à la racine du projet.
 
-Modifiez les paramètres dans `src/main/java/com/example/forum_project/utils/DBConnection.java` :
+Pour changer l'emplacement, modifiez la variable d'environnement `DATABASE_PATH` ou éditez `src/main/java/com/example/forum_project/utils/DBConnection.java` :
 
 ```java
-private static final String DB_URL = "jdbc:mysql://localhost:3306/blog_jee?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8";
-private static final String DB_USER = "root";  // Votre utilisateur MySQL
-private static final String DB_PASSWORD = "";  // Votre mot de passe MySQL
+// Par défaut: blog_jee.db dans le répertoire courant
+// Pour Railway: utilisez DATABASE_PATH=/tmp/blog_jee.db
+private static final String DB_PATH = System.getenv("DATABASE_PATH") != null 
+    ? System.getenv("DATABASE_PATH") 
+    : "blog_jee.db";
 ```
 
 ### 4. Configurer l'envoi d'emails (optionnel)
