@@ -40,6 +40,10 @@ public class ApplicationContextListener implements ServletContextListener {
      */
     private void initializeDatabase() throws SQLException {
         try (java.sql.Connection conn = DBConnection.getInstance().getConnection()) {
+            // Log le chemin de la base de données pour le débogage
+            String dbUrl = conn.getMetaData().getURL();
+            logger.info("Connexion à la base de données: " + dbUrl);
+            
             // Vérifier si la table utilisateurs existe
             boolean tableExists = false;
             try (Statement stmt = conn.createStatement();
@@ -55,6 +59,11 @@ public class ApplicationContextListener implements ServletContextListener {
             } else {
                 logger.info("Base de données déjà initialisée");
             }
+        } catch (SQLException e) {
+            logger.severe("Erreur SQL lors de l'initialisation: " + e.getMessage());
+            logger.severe("Code d'erreur SQL: " + e.getErrorCode());
+            logger.severe("État SQL: " + e.getSQLState());
+            throw e;
         }
     }
     
@@ -66,6 +75,7 @@ public class ApplicationContextListener implements ServletContextListener {
             // Activer les clés étrangères
             stmt.execute("PRAGMA foreign_keys = ON");
             
+            logger.info("Création de la table utilisateurs...");
             // Créer la table utilisateurs
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS utilisateurs (
@@ -83,10 +93,21 @@ public class ApplicationContextListener implements ServletContextListener {
                 )
                 """);
             
+            // Vérifier que la table utilisateurs a été créée
+            try (java.sql.ResultSet rs = stmt.executeQuery(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='utilisateurs'")) {
+                if (!rs.next()) {
+                    throw new SQLException("La table utilisateurs n'a pas été créée correctement");
+                }
+                logger.info("Table utilisateurs créée avec succès");
+            }
+            
+            logger.info("Création des index pour utilisateurs...");
             // Créer les index pour utilisateurs
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_email ON utilisateurs(email)");
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_token ON utilisateurs(token_verification)");
             
+            logger.info("Création de la table articles...");
             // Créer la table articles
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS articles (
@@ -103,11 +124,13 @@ public class ApplicationContextListener implements ServletContextListener {
                 )
                 """);
             
+            logger.info("Création des index pour articles...");
             // Créer les index pour articles
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_auteur ON articles(auteur_id)");
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_statut ON articles(statut)");
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_date_creation ON articles(date_creation)");
             
+            logger.info("Création de la table commentaires...");
             // Créer la table commentaires
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS commentaires (
@@ -122,9 +145,12 @@ public class ApplicationContextListener implements ServletContextListener {
                 )
                 """);
             
+            logger.info("Création des index pour commentaires...");
             // Créer les index pour commentaires
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_article ON commentaires(article_id)");
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_auteur_comment ON commentaires(auteur_id)");
+            
+            logger.info("Toutes les tables ont été créées avec succès");
         }
     }
     
