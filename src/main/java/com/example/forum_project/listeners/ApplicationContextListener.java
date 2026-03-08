@@ -63,32 +63,44 @@ public class ApplicationContextListener implements ServletContextListener {
             } else {
                 logger.info("Base de données déjà initialisée");
                 
-                // Check if database is empty (no users OR no articles) and seed if needed
-                if (isDatabaseEmpty(conn)) {
-                    logger.info("Base de données vide détectée, ajout des données initiales...");
+                // Vérifier le nombre d'utilisateurs et d'articles
+                int userCount = 0;
+                int articleCount = 0;
+                
+                try (Statement stmt = conn.createStatement()) {
+                    try (java.sql.ResultSet rs = stmt.executeQuery("SELECT COUNT(*) as count FROM utilisateurs")) {
+                        if (rs.next()) {
+                            userCount = rs.getInt("count");
+                            logger.info("Nombre d'utilisateurs dans la base: " + userCount);
+                        }
+                    }
+                    
+                    try (java.sql.ResultSet rs = stmt.executeQuery("SELECT COUNT(*) as count FROM articles")) {
+                        if (rs.next()) {
+                            articleCount = rs.getInt("count");
+                            logger.info("Nombre d'articles dans la base: " + articleCount);
+                        }
+                    }
+                } catch (SQLException e) {
+                    logger.warning("Erreur lors de la vérification de la base: " + e.getMessage());
+                }
+                
+                // Vérifier si on doit forcer le seed
+                String forceSeed = System.getenv("FORCE_SEED");
+                boolean shouldForceSeed = "true".equalsIgnoreCase(forceSeed);
+                
+                // Seed si: pas d'utilisateurs, pas d'articles, ou FORCE_SEED=true
+                if (userCount == 0 || articleCount == 0 || shouldForceSeed) {
+                    if (shouldForceSeed) {
+                        logger.info("FORCE_SEED=true détecté, re-seeding de la base de données...");
+                    } else if (userCount == 0) {
+                        logger.info("Aucun utilisateur trouvé, ajout des données initiales...");
+                    } else if (articleCount == 0) {
+                        logger.info("Aucun article trouvé, ajout des données initiales...");
+                    }
                     seedInitialData(conn);
                 } else {
-                    // Vérifier aussi s'il n'y a pas d'articles (même s'il y a des utilisateurs)
-                    String forceSeed = System.getenv("FORCE_SEED");
-                    boolean shouldForceSeed = "true".equalsIgnoreCase(forceSeed);
-                    
-                    try (Statement stmt = conn.createStatement();
-                         java.sql.ResultSet rs = stmt.executeQuery("SELECT COUNT(*) as count FROM articles")) {
-                        if (rs.next()) {
-                            int articleCount = rs.getInt("count");
-                            logger.info("Base de données contient " + articleCount + " articles");
-                            if (articleCount == 0 || shouldForceSeed) {
-                                if (shouldForceSeed) {
-                                    logger.info("FORCE_SEED=true détecté, re-seeding de la base de données...");
-                                } else {
-                                    logger.info("Aucun article trouvé dans la base, ajout des données initiales...");
-                                }
-                                seedInitialData(conn);
-                            }
-                        }
-                    } catch (SQLException e) {
-                        logger.warning("Erreur lors de la vérification des articles: " + e.getMessage());
-                    }
+                    logger.info("Base de données contient déjà des données (utilisateurs: " + userCount + ", articles: " + articleCount + ")");
                 }
             }
         } catch (SQLException e) {
@@ -183,19 +195,6 @@ public class ApplicationContextListener implements ServletContextListener {
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_auteur_comment ON commentaires(auteur_id)");
             
             logger.info("Toutes les tables ont été créées avec succès");
-        }
-    }
-    
-    /**
-     * Vérifie si la base de données est vide (aucun utilisateur)
-     */
-    private boolean isDatabaseEmpty(java.sql.Connection conn) throws SQLException {
-        try (Statement stmt = conn.createStatement();
-             java.sql.ResultSet rs = stmt.executeQuery("SELECT COUNT(*) as count FROM utilisateurs")) {
-            if (rs.next()) {
-                return rs.getInt("count") == 0;
-            }
-            return true;
         }
     }
     
@@ -323,6 +322,17 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setInt(6, 0);
                 pstmt.setString(7, "Nouveau membre de la communauté.");
                 pstmt.setString(8, "-5 days");
+                pstmt.executeUpdate();
+                
+                // David Smith (utilisateur de test)
+                pstmt.setString(1, "Smith");
+                pstmt.setString(2, "David");
+                pstmt.setString(3, "david.smith@forum.com");
+                pstmt.setString(4, passwordHash);
+                pstmt.setString(5, "ADMIN");
+                pstmt.setInt(6, 1);
+                pstmt.setString(7, "Administrateur de test - David Smith");
+                pstmt.setString(8, "-3 days");
                 pstmt.executeUpdate();
             }
             
@@ -561,11 +571,25 @@ public class ApplicationContextListener implements ServletContextListener {
             }
             
             logger.info("Données initiales ajoutées avec succès !");
-            logger.info("Vous pouvez vous connecter avec:");
-            logger.info("  - Email: admin@forum.com");
-            logger.info("  - Mot de passe: password123");
-            logger.info("  - Email: jean.dupont@forum.com");
-            logger.info("  - Mot de passe: password123");
+            logger.info("==========================================");
+            logger.info("COMPTES DISPONIBLES POUR CONNEXION:");
+            logger.info("==========================================");
+            logger.info("1. Email: admin@forum.com");
+            logger.info("   Mot de passe: password123");
+            logger.info("   Rôle: ADMIN");
+            logger.info("");
+            logger.info("2. Email: jean.dupont@forum.com");
+            logger.info("   Mot de passe: password123");
+            logger.info("   Rôle: ADMIN");
+            logger.info("");
+            logger.info("3. Email: david.smith@forum.com");
+            logger.info("   Mot de passe: password123");
+            logger.info("   Rôle: ADMIN");
+            logger.info("");
+            logger.info("4. Email: sophie.martin@forum.com");
+            logger.info("   Mot de passe: password123");
+            logger.info("   Rôle: MEMBRE");
+            logger.info("==========================================");
         } catch (SQLException e) {
             // Rollback en cas d'erreur
             try {
