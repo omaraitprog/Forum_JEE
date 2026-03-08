@@ -309,7 +309,7 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setInt(4, 1);
                 pstmt.setString(5, "PUBLIE");
                 pstmt.setString(6, "-25 days");
-                pstmt.setString(7, null); // date_modification null
+                pstmt.setNull(7, java.sql.Types.VARCHAR); // date_modification null
                 pstmt.executeUpdate();
                 
                 // Article 2: Java EE
@@ -319,7 +319,7 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setInt(4, 1);
                 pstmt.setString(5, "PUBLIE");
                 pstmt.setString(6, "-22 days");
-                pstmt.setString(7, null); // date_modification will be set separately
+                pstmt.setNull(7, java.sql.Types.VARCHAR); // date_modification will be set separately
                 pstmt.executeUpdate();
                 
                 // Article 3: Sécurité Web
@@ -329,7 +329,7 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setInt(4, 3);
                 pstmt.setString(5, "PUBLIE");
                 pstmt.setString(6, "-20 days");
-                pstmt.setString(7, null); // date_modification null
+                pstmt.setNull(7, java.sql.Types.VARCHAR); // date_modification null
                 pstmt.executeUpdate();
                 
                 // Article 4: MVC
@@ -339,7 +339,7 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setInt(4, 3);
                 pstmt.setString(5, "PUBLIE");
                 pstmt.setString(6, "-18 days");
-                pstmt.setString(7, null); // date_modification null
+                pstmt.setNull(7, java.sql.Types.VARCHAR); // date_modification null
                 pstmt.executeUpdate();
                 
                 // Article 5: SQLite
@@ -349,7 +349,7 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setInt(4, 1);
                 pstmt.setString(5, "PUBLIE");
                 pstmt.setString(6, "-15 days");
-                pstmt.setString(7, null); // date_modification null
+                pstmt.setNull(7, java.sql.Types.VARCHAR); // date_modification null
                 pstmt.executeUpdate();
                 
                 // Article 6: Servlets
@@ -359,7 +359,7 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setInt(4, 4);
                 pstmt.setString(5, "PUBLIE");
                 pstmt.setString(6, "-12 days");
-                pstmt.setString(7, null); // date_modification null
+                pstmt.setNull(7, java.sql.Types.VARCHAR); // date_modification null
                 pstmt.executeUpdate();
                 
                 // Article 7: JSP
@@ -369,7 +369,7 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setInt(4, 4);
                 pstmt.setString(5, "PUBLIE");
                 pstmt.setString(6, "-10 days");
-                pstmt.setString(7, null); // date_modification null
+                pstmt.setNull(7, java.sql.Types.VARCHAR); // date_modification null
                 pstmt.executeUpdate();
                 
                 // Article 8: Déploiement
@@ -379,7 +379,7 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setInt(4, 2);
                 pstmt.setString(5, "PUBLIE");
                 pstmt.setString(6, "-8 days");
-                pstmt.setString(7, null); // date_modification null
+                pstmt.setNull(7, java.sql.Types.VARCHAR); // date_modification null
                 pstmt.executeUpdate();
             }
             
@@ -503,6 +503,15 @@ public class ApplicationContextListener implements ServletContextListener {
             conn.commit();
             conn.setAutoCommit(true);
             
+            // Vérifier que les données ont été insérées
+            try (Statement stmt = conn.createStatement();
+                 java.sql.ResultSet rs = stmt.executeQuery("SELECT COUNT(*) as count FROM articles")) {
+                if (rs.next()) {
+                    int articleCount = rs.getInt("count");
+                    logger.info("Nombre d'articles dans la base: " + articleCount);
+                }
+            }
+            
             logger.info("Données initiales ajoutées avec succès !");
             logger.info("Vous pouvez vous connecter avec:");
             logger.info("  - Email: admin@forum.com");
@@ -512,13 +521,18 @@ public class ApplicationContextListener implements ServletContextListener {
         } catch (SQLException e) {
             // Rollback en cas d'erreur
             try {
-                conn.rollback();
-                conn.setAutoCommit(true);
+                if (conn != null && !conn.isClosed()) {
+                    conn.rollback();
+                    conn.setAutoCommit(true);
+                }
             } catch (SQLException rollbackEx) {
-                logger.warning("Erreur lors du rollback: " + rollbackEx.getMessage());
+                logger.severe("Erreur lors du rollback: " + rollbackEx.getMessage());
+                rollbackEx.printStackTrace();
             }
-            logger.warning("Erreur lors de l'ajout des données initiales: " + e.getMessage());
-            // Ne pas faire échouer l'application si le seed échoue
+            logger.severe("Erreur lors de l'ajout des données initiales: " + e.getMessage());
+            logger.severe("Code d'erreur SQL: " + e.getErrorCode());
+            logger.severe("État SQL: " + e.getSQLState());
+            // Ne pas faire échouer l'application si le seed échoue, mais logger l'erreur
             e.printStackTrace();
         }
     }
