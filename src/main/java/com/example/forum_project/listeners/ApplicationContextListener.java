@@ -5,17 +5,12 @@ import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Enumeration;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * Listener pour nettoyer les ressources lors de l'arrêt de l'application
@@ -67,70 +62,69 @@ public class ApplicationContextListener implements ServletContextListener {
      * Crée les tables de la base de données
      */
     private void createTables(java.sql.Connection conn) throws SQLException {
-        String schema = """
-            -- Table des utilisateurs
-            CREATE TABLE IF NOT EXISTS utilisateurs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nom VARCHAR(100) NOT NULL,
-                prenom VARCHAR(100) NOT NULL,
-                email VARCHAR(150) UNIQUE NOT NULL,
-                mot_de_passe VARCHAR(255) NOT NULL,
-                role TEXT DEFAULT 'MEMBRE' CHECK(role IN ('MEMBRE','ADMIN')),
-                actif INTEGER DEFAULT 0,
-                token_verification VARCHAR(255),
-                date_inscription DATETIME DEFAULT CURRENT_TIMESTAMP,
-                photo_profil VARCHAR(255),
-                bio TEXT
-            );
-            
-            CREATE INDEX IF NOT EXISTS idx_email ON utilisateurs(email);
-            CREATE INDEX IF NOT EXISTS idx_token ON utilisateurs(token_verification);
-            
-            -- Table des articles
-            CREATE TABLE IF NOT EXISTS articles (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                titre VARCHAR(255) NOT NULL,
-                contenu TEXT NOT NULL,
-                resume VARCHAR(500),
-                auteur_id INTEGER NOT NULL,
-                date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
-                date_modification DATETIME NULL,
-                statut TEXT DEFAULT 'PUBLIE' CHECK(statut IN ('BROUILLON','PUBLIE','ARCHIVE')),
-                image_url VARCHAR(255),
-                FOREIGN KEY (auteur_id) REFERENCES utilisateurs(id) ON DELETE CASCADE
-            );
-            
-            CREATE INDEX IF NOT EXISTS idx_auteur ON articles(auteur_id);
-            CREATE INDEX IF NOT EXISTS idx_statut ON articles(statut);
-            CREATE INDEX IF NOT EXISTS idx_date_creation ON articles(date_creation);
-            
-            -- Table des commentaires
-            CREATE TABLE IF NOT EXISTS commentaires (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                contenu TEXT NOT NULL,
-                article_id INTEGER NOT NULL,
-                auteur_id INTEGER NOT NULL,
-                date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
-                approuve INTEGER DEFAULT 1,
-                FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE,
-                FOREIGN KEY (auteur_id) REFERENCES utilisateurs(id) ON DELETE CASCADE
-            );
-            
-            CREATE INDEX IF NOT EXISTS idx_article ON commentaires(article_id);
-            CREATE INDEX IF NOT EXISTS idx_auteur ON commentaires(auteur_id);
-            """;
-        
         try (Statement stmt = conn.createStatement()) {
             // Activer les clés étrangères
             stmt.execute("PRAGMA foreign_keys = ON");
-            // Exécuter le schéma
-            String[] statements = schema.split(";");
-            for (String sql : statements) {
-                sql = sql.trim();
-                if (!sql.isEmpty() && !sql.startsWith("--")) {
-                    stmt.execute(sql);
-                }
-            }
+            
+            // Créer la table utilisateurs
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS utilisateurs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nom VARCHAR(100) NOT NULL,
+                    prenom VARCHAR(100) NOT NULL,
+                    email VARCHAR(150) UNIQUE NOT NULL,
+                    mot_de_passe VARCHAR(255) NOT NULL,
+                    role TEXT DEFAULT 'MEMBRE' CHECK(role IN ('MEMBRE','ADMIN')),
+                    actif INTEGER DEFAULT 0,
+                    token_verification VARCHAR(255),
+                    date_inscription DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    photo_profil VARCHAR(255),
+                    bio TEXT
+                )
+                """);
+            
+            // Créer les index pour utilisateurs
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_email ON utilisateurs(email)");
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_token ON utilisateurs(token_verification)");
+            
+            // Créer la table articles
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS articles (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    titre VARCHAR(255) NOT NULL,
+                    contenu TEXT NOT NULL,
+                    resume VARCHAR(500),
+                    auteur_id INTEGER NOT NULL,
+                    date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    date_modification DATETIME NULL,
+                    statut TEXT DEFAULT 'PUBLIE' CHECK(statut IN ('BROUILLON','PUBLIE','ARCHIVE')),
+                    image_url VARCHAR(255),
+                    FOREIGN KEY (auteur_id) REFERENCES utilisateurs(id) ON DELETE CASCADE
+                )
+                """);
+            
+            // Créer les index pour articles
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_auteur ON articles(auteur_id)");
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_statut ON articles(statut)");
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_date_creation ON articles(date_creation)");
+            
+            // Créer la table commentaires
+            stmt.execute("""
+                CREATE TABLE IF NOT EXISTS commentaires (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    contenu TEXT NOT NULL,
+                    article_id INTEGER NOT NULL,
+                    auteur_id INTEGER NOT NULL,
+                    date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    approuve INTEGER DEFAULT 1,
+                    FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE,
+                    FOREIGN KEY (auteur_id) REFERENCES utilisateurs(id) ON DELETE CASCADE
+                )
+                """);
+            
+            // Créer les index pour commentaires
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_article ON commentaires(article_id)");
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_auteur_comment ON commentaires(auteur_id)");
         }
     }
     
