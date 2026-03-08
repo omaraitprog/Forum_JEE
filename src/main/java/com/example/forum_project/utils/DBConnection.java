@@ -17,6 +17,17 @@ public class DBConnection {
     // Sur Railway, utilise /tmp pour la persistance ou un chemin de volume
     private static final String DB_PATH = getDatabasePath();
     
+    static {
+        // Log le chemin de la base de données au chargement de la classe
+        System.out.println("=== DBConnection Initialization ===");
+        System.out.println("Chemin de la base de données: " + DB_PATH);
+        System.out.println("URL de la base de données: jdbc:sqlite:" + DB_PATH);
+        System.out.println("RAILWAY_ENVIRONMENT: " + System.getenv("RAILWAY_ENVIRONMENT"));
+        System.out.println("RAILWAY: " + System.getenv("RAILWAY"));
+        System.out.println("DATABASE_PATH: " + System.getenv("DATABASE_PATH"));
+        verifyDatabasePath();
+    }
+    
     /**
      * Détermine le chemin de la base de données en fonction de l'environnement
      * Priorité: DATABASE_PATH > Railway volume (/data) > /tmp > local
@@ -68,8 +79,45 @@ public class DBConnection {
                     System.err.println("Impossible de créer le répertoire: " + parentDir.getAbsolutePath());
                 }
             }
+            // Vérifier que le répertoire parent est accessible en écriture
+            if (parentDir != null && parentDir.exists()) {
+                if (!parentDir.canWrite()) {
+                    System.err.println("ATTENTION: Le répertoire n'est pas accessible en écriture: " + parentDir.getAbsolutePath());
+                } else {
+                    System.out.println("Répertoire vérifié et accessible en écriture: " + parentDir.getAbsolutePath());
+                }
+            }
         } catch (Exception e) {
             System.err.println("Erreur lors de la vérification/création du répertoire pour: " + dbPath);
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Vérifie que le chemin de la base de données est valide et accessible
+     */
+    private static void verifyDatabasePath() {
+        try {
+            java.io.File dbFile = new java.io.File(DB_PATH);
+            java.io.File parentDir = dbFile.getParentFile();
+            
+            if (parentDir == null) {
+                // Pas de répertoire parent (fichier dans le répertoire courant)
+                System.out.println("Base de données dans le répertoire courant");
+            } else {
+                System.out.println("Répertoire parent: " + parentDir.getAbsolutePath());
+                System.out.println("Répertoire parent existe: " + parentDir.exists());
+                System.out.println("Répertoire parent est un répertoire: " + (parentDir.exists() ? parentDir.isDirectory() : "N/A"));
+                System.out.println("Répertoire parent est accessible en écriture: " + (parentDir.exists() ? parentDir.canWrite() : "N/A"));
+            }
+            
+            System.out.println("Fichier de base de données existe: " + dbFile.exists());
+            if (dbFile.exists()) {
+                System.out.println("Fichier de base de données est accessible en écriture: " + dbFile.canWrite());
+                System.out.println("Taille du fichier: " + dbFile.length() + " bytes");
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la vérification du chemin de la base de données: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -109,25 +157,41 @@ public class DBConnection {
      * @throws SQLException si une erreur survient lors de la connexion
      */
     public Connection getConnection() throws SQLException {
-        if (connection == null || connection.isClosed()) {
-            try {
-                System.out.println("Connexion à la base de données: " + DB_URL);
-                System.out.println("Chemin de la base de données: " + DB_PATH);
-                connection = DriverManager.getConnection(DB_URL);
-                System.out.println("Connexion établie avec succès");
-                // Activer les contraintes de clés étrangères pour SQLite
-                try (java.sql.Statement stmt = connection.createStatement()) {
-                    stmt.execute("PRAGMA foreign_keys = ON");
+        try {
+            // Vérifier si la connexion existe et est valide
+            if (connection != null && !connection.isClosed()) {
+                // Tester si la connexion est toujours valide
+                try {
+                    if (connection.isValid(2)) { // Timeout de 2 secondes
+                        return connection;
+                    }
+                } catch (SQLException e) {
+                    System.err.println("La connexion n'est plus valide, création d'une nouvelle connexion");
+                    connection = null;
                 }
-            } catch (SQLException e) {
-                System.err.println("Erreur lors de la connexion à la base de données: " + DB_URL);
-                System.err.println("Message d'erreur: " + e.getMessage());
-                System.err.println("Code d'erreur SQL: " + e.getErrorCode());
-                System.err.println("État SQL: " + e.getSQLState());
-                throw e;
             }
+            
+            // Créer une nouvelle connexion
+            System.out.println("Création d'une nouvelle connexion à la base de données: " + DB_URL);
+            System.out.println("Chemin de la base de données: " + DB_PATH);
+            
+            connection = DriverManager.getConnection(DB_URL);
+            System.out.println("Connexion établie avec succès");
+            
+            // Activer les contraintes de clés étrangères pour SQLite
+            try (java.sql.Statement stmt = connection.createStatement()) {
+                stmt.execute("PRAGMA foreign_keys = ON");
+            }
+            
+            return connection;
+        } catch (SQLException e) {
+            System.err.println("Erreur lors de la connexion à la base de données: " + DB_URL);
+            System.err.println("Message d'erreur: " + e.getMessage());
+            System.err.println("Code d'erreur SQL: " + e.getErrorCode());
+            System.err.println("État SQL: " + e.getSQLState());
+            connection = null; // Réinitialiser la connexion en cas d'erreur
+            throw e;
         }
-        return connection;
     }
     
     /**

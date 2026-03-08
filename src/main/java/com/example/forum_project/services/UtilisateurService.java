@@ -45,30 +45,69 @@ public class UtilisateurService {
      * @return Le token de vérification si l'inscription a réussi, null sinon
      */
     public String inscrire(Utilisateur utilisateur) {
-        // Vérifier que l'email n'existe pas déjà
-        if (utilisateurDAO.emailExists(utilisateur.getEmail())) {
+        try {
+            System.out.println("Début de l'inscription pour l'email: " + utilisateur.getEmail());
+            
+            // Vérifier que l'email n'existe pas déjà
+            boolean emailExists = false;
+            try {
+                emailExists = utilisateurDAO.emailExists(utilisateur.getEmail());
+                System.out.println("Vérification email - existe déjà: " + emailExists);
+            } catch (Exception e) {
+                System.err.println("Erreur lors de la vérification de l'email: " + e.getMessage());
+                e.printStackTrace();
+                return null;
+            }
+            
+            if (emailExists) {
+                System.err.println("L'email existe déjà: " + utilisateur.getEmail());
+                return null;
+            }
+            
+            // Hasher le mot de passe avec BCrypt
+            String hashedPassword;
+            try {
+                hashedPassword = BCrypt.hashpw(utilisateur.getMotDePasse(), BCrypt.gensalt());
+                utilisateur.setMotDePasse(hashedPassword);
+                System.out.println("Mot de passe hashé avec succès");
+            } catch (Exception e) {
+                System.err.println("Erreur lors du hashage du mot de passe: " + e.getMessage());
+                e.printStackTrace();
+                return null;
+            }
+            
+            // Générer un token de vérification
+            String token = UUID.randomUUID().toString();
+            utilisateur.setTokenVerification(token);
+            System.out.println("Token généré: " + token);
+            
+            // Créer l'utilisateur
+            int userId = utilisateurDAO.create(utilisateur);
+            System.out.println("Résultat de la création de l'utilisateur - userId: " + userId);
+            
+            if (userId > 0) {
+                // Envoyer l'email de vérification (peut échouer si non configuré)
+                try {
+                    boolean emailEnvoye = emailService.envoyerEmailVerification(utilisateur.getEmail(), token);
+                    System.out.println("Email de vérification envoyé: " + emailEnvoye);
+                } catch (Exception e) {
+                    System.err.println("Erreur lors de l'envoi de l'email (non bloquant): " + e.getMessage());
+                    // Ne pas bloquer l'inscription si l'email échoue
+                }
+                // Retourner le token même si l'email n'a pas été envoyé
+                System.out.println("Inscription réussie pour l'email: " + utilisateur.getEmail());
+                return token;
+            } else {
+                System.err.println("Échec de la création de l'utilisateur - userId invalide: " + userId);
+                return null;
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur inattendue lors de l'inscription pour l'email: " + utilisateur.getEmail());
+            System.err.println("Type d'erreur: " + e.getClass().getName());
+            System.err.println("Message: " + e.getMessage());
+            e.printStackTrace();
             return null;
         }
-        
-        // Hasher le mot de passe avec BCrypt
-        String hashedPassword = BCrypt.hashpw(utilisateur.getMotDePasse(), BCrypt.gensalt());
-        utilisateur.setMotDePasse(hashedPassword);
-        
-        // Générer un token de vérification
-        String token = UUID.randomUUID().toString();
-        utilisateur.setTokenVerification(token);
-        
-        // Créer l'utilisateur
-        int userId = utilisateurDAO.create(utilisateur);
-        
-        if (userId > 0) {
-            // Envoyer l'email de vérification (peut échouer si non configuré)
-            boolean emailEnvoye = emailService.envoyerEmailVerification(utilisateur.getEmail(), token);
-            // Retourner le token même si l'email n'a pas été envoyé
-            return token;
-        }
-        
-        return null;
     }
     
     /**
