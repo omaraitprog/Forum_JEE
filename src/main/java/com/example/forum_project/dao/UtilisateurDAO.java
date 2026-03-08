@@ -98,7 +98,13 @@ public class UtilisateurDAO {
                 stmt.setNull(8, Types.VARCHAR);
             }
             
+            System.out.println("Exécution de l'INSERT pour l'utilisateur: " + utilisateur.getEmail());
+            System.out.println("Données: nom=" + utilisateur.getNom() + ", prenom=" + utilisateur.getPrenom() + 
+                             ", email=" + utilisateur.getEmail() + ", role=" + utilisateur.getRole() + 
+                             ", actif=" + utilisateur.isActif() + ", token=" + utilisateur.getTokenVerification());
+            
             int rowsAffected = stmt.executeUpdate();
+            System.out.println("Lignes affectées: " + rowsAffected);
             
             if (rowsAffected > 0) {
                 ResultSet rs = stmt.getGeneratedKeys();
@@ -106,6 +112,21 @@ public class UtilisateurDAO {
                     int userId = rs.getInt(1);
                     System.out.println("Utilisateur créé avec succès, ID: " + userId + ", Email: " + utilisateur.getEmail());
                     return userId;
+                } else {
+                    System.err.println("Aucune clé générée pour l'utilisateur: " + utilisateur.getEmail());
+                    // Même si on n'a pas l'ID, l'insertion a réussi, donc on va chercher l'ID manuellement
+                    try (PreparedStatement stmt2 = conn.prepareStatement("SELECT id FROM utilisateurs WHERE email = ?")) {
+                        stmt2.setString(1, utilisateur.getEmail());
+                        try (ResultSet rs2 = stmt2.executeQuery()) {
+                            if (rs2.next()) {
+                                int userId = rs2.getInt(1);
+                                System.out.println("ID récupéré manuellement: " + userId);
+                                return userId;
+                            }
+                        }
+                    }
+                    System.err.println("Impossible de récupérer l'ID de l'utilisateur créé");
+                    return -1;
                 }
             } else {
                 System.err.println("Aucune ligne affectée lors de la création de l'utilisateur: " + utilisateur.getEmail());

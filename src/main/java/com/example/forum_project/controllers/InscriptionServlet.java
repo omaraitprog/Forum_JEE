@@ -66,9 +66,20 @@ public class InscriptionServlet extends HttpServlet {
         }
         
         // Vérifier que l'email n'existe pas déjà
-        com.example.forum_project.dao.UtilisateurDAO dao = new com.example.forum_project.dao.UtilisateurDAO();
-        if (dao.emailExists(email)) {
-            request.setAttribute("erreur", "Cet email est déjà utilisé");
+        try {
+            com.example.forum_project.dao.UtilisateurDAO dao = new com.example.forum_project.dao.UtilisateurDAO();
+            boolean emailExists = dao.emailExists(email);
+            if (emailExists) {
+                request.setAttribute("erreur", "Cet email est déjà utilisé");
+                request.getRequestDispatcher("/WEB-INF/views/auth/register.jsp").forward(request, response);
+                return;
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la vérification de l'email: " + email);
+            System.err.println("Type d'erreur: " + e.getClass().getName());
+            System.err.println("Message: " + e.getMessage());
+            e.printStackTrace();
+            request.setAttribute("erreur", "Erreur de connexion à la base de données. Veuillez réessayer plus tard.");
             request.getRequestDispatcher("/WEB-INF/views/auth/register.jsp").forward(request, response);
             return;
         }
@@ -80,6 +91,7 @@ public class InscriptionServlet extends HttpServlet {
                 utilisateur.setBio(bio);
             }
             
+            System.out.println("Tentative d'inscription pour: " + email);
             String token = utilisateurService.inscrire(utilisateur);
             
             if (token != null) {
@@ -93,18 +105,28 @@ public class InscriptionServlet extends HttpServlet {
                 baseUrl += request.getContextPath();
                 String verificationLink = baseUrl + "/verifier?token=" + token;
                 
+                System.out.println("Inscription réussie pour: " + email);
                 request.setAttribute("succes", "Inscription réussie !");
                 request.setAttribute("verificationLink", verificationLink);
                 request.getRequestDispatcher("/WEB-INF/views/auth/register.jsp").forward(request, response);
             } else {
-                System.err.println("Erreur: utilisateurService.inscrire() a retourné null pour l'email: " + email);
-                request.setAttribute("erreur", "Erreur lors de l'inscription. Veuillez réessayer.");
+                System.err.println("ERREUR CRITIQUE: utilisateurService.inscrire() a retourné null pour l'email: " + email);
+                System.err.println("Cela signifie que l'inscription a échoué dans UtilisateurService");
+                request.setAttribute("erreur", "Erreur lors de l'inscription. Veuillez réessayer. Si le problème persiste, vérifiez les logs du serveur.");
                 request.getRequestDispatcher("/WEB-INF/views/auth/register.jsp").forward(request, response);
             }
         } catch (Exception e) {
-            System.err.println("Erreur lors de l'inscription pour l'email: " + email);
+            System.err.println("EXCEPTION lors de l'inscription pour l'email: " + email);
+            System.err.println("Type d'erreur: " + e.getClass().getName());
+            System.err.println("Message: " + e.getMessage());
+            System.err.println("Cause: " + (e.getCause() != null ? e.getCause().getMessage() : "N/A"));
             e.printStackTrace();
-            request.setAttribute("erreur", "Erreur lors de l'inscription. Veuillez réessayer.");
+            String errorMsg = "Erreur lors de l'inscription: " + e.getMessage();
+            // En production, ne pas exposer les détails de l'erreur
+            if (errorMsg.length() > 100) {
+                errorMsg = "Erreur lors de l'inscription. Veuillez réessayer.";
+            }
+            request.setAttribute("erreur", errorMsg);
             request.getRequestDispatcher("/WEB-INF/views/auth/register.jsp").forward(request, response);
         }
     }
