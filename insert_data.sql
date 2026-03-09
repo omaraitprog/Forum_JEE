@@ -1,8 +1,8 @@
 -- Script SQL pour ajouter des données dans la base de données après le hosting
 -- Utilisez ce script pour insérer des données de test ou des données initiales
 -- 
--- IMPORTANT: Assurez-vous d'être connecté à la bonne base de données SQLite
--- Vous pouvez utiliser un client SQLite comme DB Browser for SQLite ou exécuter via Java
+-- IMPORTANT: Assurez-vous d'être connecté à la bonne base de données MySQL
+-- USE blog_jee;
 
 -- ============================================
 -- INSERTION D'UTILISATEURS
@@ -10,7 +10,6 @@
 
 -- Note: Les mots de passe doivent être hashés avec BCrypt
 -- Hash pour "password123": $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
--- Hash pour "admin123": $2a$10$rK8qJ8qJ8qJ8qJ8qJ8qJ8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
 
 -- Exemple: Ajouter un nouvel administrateur
 INSERT INTO utilisateurs (nom, prenom, email, mot_de_passe, role, actif, bio) 
@@ -39,7 +38,7 @@ Le contenu peut contenir plusieurs paragraphes et être formaté comme vous le s
 'Un résumé court de l''article qui apparaîtra dans la liste des articles.',
 1, -- Remplacez par l'ID d'un utilisateur existant
 'PUBLIE', 
-datetime('now'));
+NOW());
 
 -- Exemple: Ajouter un autre article
 INSERT INTO articles (titre, contenu, resume, auteur_id, statut, date_creation) 
@@ -58,7 +57,7 @@ Ces technologies forment la base d''une application web moderne et performante.'
 'Découvrez les technologies essentielles pour développer des applications web modernes.',
 1, -- Remplacez par l'ID d'un utilisateur existant
 'PUBLIE', 
-datetime('now'));
+NOW());
 
 -- ============================================
 -- INSERTION DE COMMENTAIRES
@@ -74,7 +73,7 @@ VALUES
 ('Excellent article ! Merci pour ces informations utiles.',
 1, -- Remplacez par l'ID d'un article existant
 2, -- Remplacez par l'ID d'un utilisateur existant
-datetime('now'),
+NOW(),
 1);
 
 -- ============================================

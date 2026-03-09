@@ -51,7 +51,7 @@ public class HealthCheckServlet extends HttpServlet {
             boolean tableExists = false;
             try (Statement stmt = conn.createStatement();
                  ResultSet rs = stmt.executeQuery(
-                     "SELECT name FROM sqlite_master WHERE type='table' AND name='utilisateurs'")) {
+                     "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'utilisateurs'")) {
                 tableExists = rs.next();
             }
             

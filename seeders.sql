@@ -1,11 +1,11 @@
 -- ============================================
--- SEEDERS - STATIC DATA FOR SQLITE DATABASE
+-- SEEDERS - STATIC DATA FOR MYSQL DATABASE
 -- ============================================
 -- This file contains static seed data for the Forum/Blog application
 -- Execute this script after creating the database schema
 -- 
--- IMPORTANT: Enable foreign keys before running
--- PRAGMA foreign_keys = ON;
+-- IMPORTANT: Make sure to USE the correct database
+-- USE blog_jee;
 -- ============================================
 
 -- ============================================
@@ -23,14 +23,14 @@
 -- Hash: $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
 
 INSERT INTO utilisateurs (nom, prenom, email, mot_de_passe, role, actif, bio, date_inscription) VALUES
-('Admin', 'Principal', 'admin@forum.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'ADMIN', 1, 'Administrateur principal du forum. Passionné de technologie et de développement web.', datetime('now', '-30 days')),
-('Dupont', 'Jean', 'jean.dupont@forum.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'ADMIN', 1, 'Co-administrateur et développeur full-stack avec 10 ans d''expérience.', datetime('now', '-25 days')),
-('Martin', 'Sophie', 'sophie.martin@forum.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'MEMBRE', 1, 'Développeuse Java passionnée par les architectures d''entreprise et les bonnes pratiques.', datetime('now', '-20 days')),
-('Bernard', 'Pierre', 'pierre.bernard@forum.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'MEMBRE', 1, 'Expert en sécurité web et en développement d''applications sécurisées.', datetime('now', '-18 days')),
-('Dubois', 'Marie', 'marie.dubois@forum.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'MEMBRE', 1, 'Designer UI/UX et développeuse frontend. Amoureuse du design moderne et des interfaces intuitives.', datetime('now', '-15 days')),
-('Lefebvre', 'Thomas', 'thomas.lefebvre@forum.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'MEMBRE', 1, 'Développeur backend spécialisé en Java EE et microservices.', datetime('now', '-12 days')),
-('Moreau', 'Julie', 'julie.moreau@forum.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'MEMBRE', 1, 'Étudiante en informatique passionnée par le développement web et les nouvelles technologies.', datetime('now', '-10 days')),
-('Petit', 'Lucas', 'lucas.petit@forum.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'MEMBRE', 0, 'Nouveau membre de la communauté.', datetime('now', '-5 days'));
+('Admin', 'Principal', 'admin@forum.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'ADMIN', 1, 'Administrateur principal du forum. Passionné de technologie et de développement web.', DATE_SUB(NOW(), INTERVAL 30 DAY)),
+('Dupont', 'Jean', 'jean.dupont@forum.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'ADMIN', 1, 'Co-administrateur et développeur full-stack avec 10 ans d''expérience.', DATE_SUB(NOW(), INTERVAL 25 DAY)),
+('Martin', 'Sophie', 'sophie.martin@forum.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'MEMBRE', 1, 'Développeuse Java passionnée par les architectures d''entreprise et les bonnes pratiques.', DATE_SUB(NOW(), INTERVAL 20 DAY)),
+('Bernard', 'Pierre', 'pierre.bernard@forum.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'MEMBRE', 1, 'Expert en sécurité web et en développement d''applications sécurisées.', DATE_SUB(NOW(), INTERVAL 18 DAY)),
+('Dubois', 'Marie', 'marie.dubois@forum.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'MEMBRE', 1, 'Designer UI/UX et développeuse frontend. Amoureuse du design moderne et des interfaces intuitives.', DATE_SUB(NOW(), INTERVAL 15 DAY)),
+('Lefebvre', 'Thomas', 'thomas.lefebvre@forum.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'MEMBRE', 1, 'Développeur backend spécialisé en Java EE et microservices.', DATE_SUB(NOW(), INTERVAL 12 DAY)),
+('Moreau', 'Julie', 'julie.moreau@forum.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'MEMBRE', 1, 'Étudiante en informatique passionnée par le développement web et les nouvelles technologies.', DATE_SUB(NOW(), INTERVAL 10 DAY)),
+('Petit', 'Lucas', 'lucas.petit@forum.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'MEMBRE', 0, 'Nouveau membre de la communauté.', DATE_SUB(NOW(), INTERVAL 5 DAY));
 
 -- ============================================
 -- INSERT ARTICLES
@@ -59,7 +59,7 @@ N''hésitez pas à explorer les articles, à commenter et à participer activeme
 
 Bonne navigation et à bientôt sur le forum !',
 'Un message de bienvenue pour tous les nouveaux membres de notre communauté de développeurs.',
-1, 'PUBLIE', datetime('now', '-25 days'), NULL),
+1, 'PUBLIE', DATE_SUB(NOW(), INTERVAL 25 DAY), NULL),
 
 ('Introduction à Java Enterprise Edition (Java EE)', 
 'Java Enterprise Edition, maintenant connu sous le nom de Jakarta EE, est une plateforme puissante pour le développement d''applications d''entreprise. Dans cet article, nous explorerons les concepts fondamentaux.
@@ -91,7 +91,7 @@ JSF est un framework pour créer des interfaces utilisateur web basées sur des 
 
 Java EE reste une excellente choix pour les applications d''entreprise nécessitant robustesse et scalabilité.',
 'Découvrez les bases de Java EE et comment cette plateforme peut vous aider à développer des applications d''entreprise robustes et scalables.',
-1, 'PUBLIE', datetime('now', '-22 days'), datetime('now', '-20 days')),
+1, 'PUBLIE', DATE_SUB(NOW(), INTERVAL 22 DAY), DATE_SUB(NOW(), INTERVAL 20 DAY)),
 
 ('Les Meilleures Pratiques de Sécurité Web', 
 'La sécurité web est un aspect crucial du développement d''applications modernes. Voici un guide complet des meilleures pratiques essentielles.
@@ -158,7 +158,7 @@ Implémentez des tokens CSRF pour protéger vos formulaires :
 
 En suivant ces pratiques, vous pouvez considérablement améliorer la sécurité de vos applications web.',
 'Apprenez les meilleures pratiques de sécurité essentielles pour protéger vos applications web contre les menaces courantes et modernes.',
-3, 'PUBLIE', datetime('now', '-20 days'), NULL),
+3, 'PUBLIE', DATE_SUB(NOW(), INTERVAL 20 DAY), NULL),
 
 ('Guide Complet du Pattern MVC', 
 'Le pattern Model-View-Controller (MVC) est l''un des patterns d''architecture les plus utilisés dans le développement web. Comprendre et bien implémenter MVC est essentiel pour créer des applications maintenables.
@@ -237,86 +237,51 @@ public class UserController extends HttpServlet {
 
 Cette séparation des responsabilités facilite la maintenance, les tests et l''évolution de l''application.',
 'Comprenez le pattern MVC en profondeur et apprenez comment l''implémenter efficacement dans vos projets web pour créer des applications bien structurées.',
-3, 'PUBLIE', datetime('now', '-18 days'), NULL),
+3, 'PUBLIE', DATE_SUB(NOW(), INTERVAL 18 DAY), NULL),
 
-('SQLite : Guide Complet pour le Développement Web', 
-'SQLite est l''un des systèmes de gestion de bases de données relationnelles les plus populaires au monde. Il est particulièrement adapté au développement web pour de nombreuses raisons.
+('MySQL : Guide Complet pour le Développement Web', 
+'MySQL est l''un des systèmes de gestion de bases de données relationnelles les plus populaires au monde. Il est particulièrement adapté au développement web pour de nombreuses raisons.
 
-## Qu''est-ce que SQLite ?
+## Qu''est-ce que MySQL ?
 
-SQLite est un moteur de base de données SQL embarqué, léger et sans serveur. Contrairement à MySQL ou PostgreSQL, SQLite ne nécessite pas de processus serveur séparé.
+MySQL est un SGBDR open source performant et fiable, utilisé par des millions d''applications à travers le monde.
 
 ## Caractéristiques Principales
 
 ### Avantages
-- **Léger** : Bibliothèque de quelques centaines de KB
-- **Sans configuration** : Pas besoin de serveur ou de configuration complexe
-- **Rapide** : Excellentes performances pour la plupart des applications
-- **ACID** : Support complet des transactions ACID
-- **Portable** : Un seul fichier de base de données
-- **Open Source** : Licence publique du domaine
+- **Performant** : Excellentes performances pour les applications web
+- **Scalable** : Peut gérer de très gros volumes de données
+- **Fiable** : Support complet des transactions ACID avec InnoDB
+- **Communauté** : Large communauté et excellent support
+- **Open Source** : Gratuit et open source
 
-### Limitations
-- Pas de gestion des utilisateurs (pas de système d''authentification)
-- Accès concurrent en écriture limité
-- Taille maximale recommandée : quelques GB
-- Pas idéal pour les applications haute concurrence
+### Fonctionnalités
+- Gestion des utilisateurs et permissions
+- Accès concurrent en écriture robuste
+- Réplication et haute disponibilité
+- Idéal pour les applications haute concurrence
 
 ## Utilisation dans le Développement Web
 
-### Quand Utiliser SQLite
+### Quand Utiliser MySQL
 
 ✅ **Idéal pour :**
-- Prototypes et applications de petite à moyenne taille
-- Applications avec peu d''accès concurrents en écriture
-- Développement et tests
-- Applications embarquées
-- Sites web avec trafic modéré
-
-❌ **À éviter pour :**
-- Applications nécessitant beaucoup d''accès concurrents en écriture
-- Applications très volumineuses (plusieurs GB)
+- Applications web de toutes tailles
+- Applications nécessitant des accès concurrents
+- Applications avec beaucoup de données
 - Systèmes nécessitant des utilisateurs multiples avec permissions
-
-## Fonctionnalités SQLite
-
-### Transactions ACID
-SQLite supporte complètement les transactions ACID :
-```sql
-BEGIN TRANSACTION;
-INSERT INTO users (name, email) VALUES ('John', 'john@example.com');
-UPDATE articles SET status = 'PUBLISHED' WHERE id = 1;
-COMMIT;
-```
-
-### Clés Étrangères
-Depuis SQLite 3.6.19, les clés étrangères sont supportées (nécessitent d''être activées) :
-```sql
-PRAGMA foreign_keys = ON;
-```
-
-### Index
-Les index améliorent considérablement les performances :
-```sql
-CREATE INDEX idx_user_email ON users(email);
-CREATE INDEX idx_article_date ON articles(date_creation);
-```
 
 ## Bonnes Pratiques
 
-1. **Activez les clés étrangères** : `PRAGMA foreign_keys = ON;`
+1. **Utilisez InnoDB** : Pour le support des transactions ACID
 2. **Utilisez des transactions** : Pour les opérations multiples
 3. **Créez des index** : Pour les colonnes fréquemment interrogées
-4. **Faites des sauvegardes régulières** : Le fichier .db peut être copié directement
-5. **Gérez les connexions** : Utilisez un pool de connexions même avec SQLite
+4. **Faites des sauvegardes régulières** : Avec mysqldump ou des outils dédiés
+5. **Gérez les connexions** : Utilisez un pool de connexions
 
-## Migration vers une Base de Données Serveur
-
-Quand votre application grandit, vous pouvez migrer vers PostgreSQL ou MySQL. La plupart des requêtes SQL sont compatibles, facilitant la migration.
-
-SQLite est un excellent choix pour démarrer rapidement et évoluer progressivement.',
-'Découvrez comment SQLite peut être utilisé efficacement dans vos projets web, ses avantages, limitations et meilleures pratiques.',
-1, 'PUBLIE', datetime('now', '-15 days'), NULL),
+MySQL est un excellent choix pour les applications web de toutes tailles.',
+'Découvrez comment MySQL peut être utilisé efficacement dans vos projets web, ses avantages et meilleures pratiques.',
+1, 'PUBLIE', DATE_SUB(NOW(), INTERVAL 15 DAY), NULL),
 
 ('Introduction aux Servlets Java', 
 'Les Servlets sont la base du développement web en Java. Dans cet article, nous explorerons les concepts fondamentaux des Servlets.
@@ -358,7 +323,7 @@ User user = (User) session.getAttribute("user");
 
 Les Servlets sont essentielles pour tout développeur Java web !',
 'Apprenez les bases des Servlets Java et comment créer des applications web dynamiques avec cette technologie fondamentale.',
-4, 'PUBLIE', datetime('now', '-12 days'), NULL),
+4, 'PUBLIE', DATE_SUB(NOW(), INTERVAL 12 DAY), NULL),
 
 ('Les Fondamentaux de JSP (JavaServer Pages)', 
 'JSP permet de créer des pages web dynamiques en mélangeant HTML et Java. C''est une technologie complémentaire aux Servlets.
@@ -396,7 +361,7 @@ JSTL simplifie le code JSP :
 
 JSP facilite la création d''interfaces utilisateur dynamiques !',
 'Découvrez comment utiliser JSP pour créer des pages web dynamiques et interactives avec Java.',
-4, 'PUBLIE', datetime('now', '-10 days'), NULL),
+4, 'PUBLIE', DATE_SUB(NOW(), INTERVAL 10 DAY), NULL),
 
 ('Guide de Déploiement d''Applications Java Web', 
 'Le déploiement d''applications Java web peut sembler complexe, mais avec les bonnes pratiques, c''est tout à fait gérable.
@@ -437,42 +402,42 @@ Utilisez des variables d''environnement pour la configuration :
 
 Le déploiement devient simple avec de la pratique !',
 'Apprenez les meilleures pratiques pour déployer vos applications Java web en production de manière efficace et sécurisée.',
-2, 'PUBLIE', datetime('now', '-8 days'), NULL),
+2, 'PUBLIE', DATE_SUB(NOW(), INTERVAL 8 DAY), NULL),
 
 ('Article en Brouillon - À Compléter', 
 'Ceci est un article en cours de rédaction. Le contenu sera complété prochainement.
 
 Merci de votre patience.',
 'Article en cours de rédaction.',
-5, 'BROUILLON', datetime('now', '-5 days'), NULL),
+5, 'BROUILLON', DATE_SUB(NOW(), INTERVAL 5 DAY), NULL),
 
 ('Article Archivé - Ancien Contenu', 
 'Cet article a été archivé car son contenu n''est plus d''actualité. Il est conservé à des fins de référence historique.
 
 Le contenu original traitait des anciennes versions de Java EE.',
 'Article archivé pour référence historique.',
-1, 'ARCHIVE', datetime('now', '-60 days'), NULL);
+1, 'ARCHIVE', DATE_SUB(NOW(), INTERVAL 60 DAY), NULL);
 
 -- ============================================
 -- INSERT COMMENTS
 -- ============================================
 
 INSERT INTO commentaires (contenu, article_id, auteur_id, date_creation, approuve) VALUES
-('Excellent article ! Merci pour ce partage. C''est exactement ce dont j''avais besoin pour comprendre Java EE.', 2, 3, datetime('now', '-21 days'), 1),
-('Très intéressant, j''ai appris beaucoup de choses. Pourriez-vous faire un article plus détaillé sur JPA ?', 2, 4, datetime('now', '-20 days'), 1),
-('La sécurité est effectivement cruciale. Merci pour ces conseils pratiques, je vais les appliquer dans mon projet.', 3, 1, datetime('now', '-19 days'), 1),
-('Super article sur la sécurité ! Pourriez-vous approfondir la partie sur les tokens CSRF ?', 3, 2, datetime('now', '-18 days'), 1),
-('Le pattern MVC est vraiment essentiel. Cet article explique très bien les concepts. Merci !', 4, 5, datetime('now', '-17 days'), 1),
-('J''ai une question : comment gérer les dépendances circulaires entre le modèle et le contrôleur ?', 4, 6, datetime('now', '-16 days'), 1),
-('SQLite est effectivement un excellent choix pour démarrer. Merci pour ce guide complet !', 5, 3, datetime('now', '-14 days'), 1),
-('Très bon article ! J''utilise SQLite dans mon projet et je confirme que c''est parfait pour les petites applications.', 5, 7, datetime('now', '-13 days'), 1),
-('Les Servlets sont la base de tout développement web Java. Merci pour cette introduction claire.', 6, 4, datetime('now', '-11 days'), 1),
-('JSP est très pratique pour créer des interfaces. Avez-vous des exemples avec JSTL ?', 7, 5, datetime('now', '-9 days'), 1),
-('Excellent guide de déploiement ! Les variables d''environnement sont effectivement essentielles.', 8, 6, datetime('now', '-7 days'), 1),
-('Merci pour ces informations. Pourriez-vous faire un article sur le déploiement sur Railway ou Heroku ?', 8, 7, datetime('now', '-6 days'), 1),
-('Bienvenue à tous les nouveaux membres ! N''hésitez pas à poser des questions.', 1, 2, datetime('now', '-24 days'), 1),
-('Super communauté ! Je suis ravi de faire partie de ce forum.', 1, 3, datetime('now', '-23 days'), 1),
-('Commentaire en attente de modération', 2, 8, datetime('now', '-4 days'), 0);
+('Excellent article ! Merci pour ce partage. C''est exactement ce dont j''avais besoin pour comprendre Java EE.', 2, 3, DATE_SUB(NOW(), INTERVAL 21 DAY), 1),
+('Très intéressant, j''ai appris beaucoup de choses. Pourriez-vous faire un article plus détaillé sur JPA ?', 2, 4, DATE_SUB(NOW(), INTERVAL 20 DAY), 1),
+('La sécurité est effectivement cruciale. Merci pour ces conseils pratiques, je vais les appliquer dans mon projet.', 3, 1, DATE_SUB(NOW(), INTERVAL 19 DAY), 1),
+('Super article sur la sécurité ! Pourriez-vous approfondir la partie sur les tokens CSRF ?', 3, 2, DATE_SUB(NOW(), INTERVAL 18 DAY), 1),
+('Le pattern MVC est vraiment essentiel. Cet article explique très bien les concepts. Merci !', 4, 5, DATE_SUB(NOW(), INTERVAL 17 DAY), 1),
+('J''ai une question : comment gérer les dépendances circulaires entre le modèle et le contrôleur ?', 4, 6, DATE_SUB(NOW(), INTERVAL 16 DAY), 1),
+('MySQL est effectivement un excellent choix pour le développement web. Merci pour ce guide complet !', 5, 3, DATE_SUB(NOW(), INTERVAL 14 DAY), 1),
+('Très bon article ! J''utilise MySQL dans mon projet et je confirme que c''est parfait pour les applications web.', 5, 7, DATE_SUB(NOW(), INTERVAL 13 DAY), 1),
+('Les Servlets sont la base de tout développement web Java. Merci pour cette introduction claire.', 6, 4, DATE_SUB(NOW(), INTERVAL 11 DAY), 1),
+('JSP est très pratique pour créer des interfaces. Avez-vous des exemples avec JSTL ?', 7, 5, DATE_SUB(NOW(), INTERVAL 9 DAY), 1),
+('Excellent guide de déploiement ! Les variables d''environnement sont effectivement essentielles.', 8, 6, DATE_SUB(NOW(), INTERVAL 7 DAY), 1),
+('Merci pour ces informations. Pourriez-vous faire un article sur le déploiement sur le cloud ?', 8, 7, DATE_SUB(NOW(), INTERVAL 6 DAY), 1),
+('Bienvenue à tous les nouveaux membres ! N''hésitez pas à poser des questions.', 1, 2, DATE_SUB(NOW(), INTERVAL 24 DAY), 1),
+('Super communauté ! Je suis ravi de faire partie de ce forum.', 1, 3, DATE_SUB(NOW(), INTERVAL 23 DAY), 1),
+('Commentaire en attente de modération', 2, 8, DATE_SUB(NOW(), INTERVAL 4 DAY), 0);
 
 -- ============================================
 -- VERIFICATION QUERIES

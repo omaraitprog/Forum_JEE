@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 /**
  * Listener pour nettoyer les ressources lors de l'arrêt de l'application
  * Nettoie les ressources JDBC lors de l'arrêt de l'application
- * Initialise la base de données SQLite si les tables n'existent pas
+ * Initialise la base de données MySQL si les tables n'existent pas
  */
 @WebListener
 public class ApplicationContextListener implements ServletContextListener {
@@ -27,7 +27,7 @@ public class ApplicationContextListener implements ServletContextListener {
     public void contextInitialized(ServletContextEvent sce) {
         logger.info("Application démarrée");
         
-        // Initialiser la base de données SQLite si nécessaire
+        // Initialiser la base de données MySQL si nécessaire
         try {
             initializeDatabase();
         } catch (Exception e) {
@@ -45,20 +45,20 @@ public class ApplicationContextListener implements ServletContextListener {
             String dbUrl = conn.getMetaData().getURL();
             logger.info("Connexion à la base de données: " + dbUrl);
             
-            // Vérifier si la table utilisateurs existe
+            // Vérifier si la table utilisateurs existe (compatible MySQL)
             boolean tableExists = false;
             try (Statement stmt = conn.createStatement();
                  java.sql.ResultSet rs = stmt.executeQuery(
-                     "SELECT name FROM sqlite_master WHERE type='table' AND name='utilisateurs'")) {
+                     "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'utilisateurs'")) {
                 tableExists = rs.next();
             }
             
             if (!tableExists) {
-                logger.info("Initialisation de la base de données SQLite...");
+                logger.info("Initialisation de la base de données MySQL...");
                 createTables(conn);
                 logger.info("Base de données initialisée avec succès");
                 
-                // Seed initial data if database is empty (works on Railway and local)
+                // Seed initial data if database is empty
                 seedInitialData(conn);
             } else {
                 logger.info("Base de données déjà initialisée");
@@ -116,83 +116,72 @@ public class ApplicationContextListener implements ServletContextListener {
      */
     private void createTables(java.sql.Connection conn) throws SQLException {
         try (Statement stmt = conn.createStatement()) {
-            // Activer les clés étrangères
-            stmt.execute("PRAGMA foreign_keys = ON");
             
             logger.info("Création de la table utilisateurs...");
             // Créer la table utilisateurs
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS utilisateurs (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id INT AUTO_INCREMENT PRIMARY KEY,
                     nom VARCHAR(100) NOT NULL,
                     prenom VARCHAR(100) NOT NULL,
                     email VARCHAR(150) UNIQUE NOT NULL,
                     mot_de_passe VARCHAR(255) NOT NULL,
-                    role TEXT DEFAULT 'MEMBRE' CHECK(role IN ('MEMBRE','ADMIN')),
-                    actif INTEGER DEFAULT 0,
+                    role ENUM('MEMBRE','ADMIN') DEFAULT 'MEMBRE',
+                    actif TINYINT(1) DEFAULT 0,
                     token_verification VARCHAR(255),
                     date_inscription DATETIME DEFAULT CURRENT_TIMESTAMP,
                     photo_profil VARCHAR(255),
-                    bio TEXT
-                )
+                    bio TEXT,
+                    INDEX idx_email (email),
+                    INDEX idx_token (token_verification)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                 """);
             
             // Vérifier que la table utilisateurs a été créée
             try (java.sql.ResultSet rs = stmt.executeQuery(
-                    "SELECT name FROM sqlite_master WHERE type='table' AND name='utilisateurs'")) {
+                    "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'utilisateurs'")) {
                 if (!rs.next()) {
                     throw new SQLException("La table utilisateurs n'a pas été créée correctement");
                 }
                 logger.info("Table utilisateurs créée avec succès");
             }
             
-            logger.info("Création des index pour utilisateurs...");
-            // Créer les index pour utilisateurs
-            stmt.execute("CREATE INDEX IF NOT EXISTS idx_email ON utilisateurs(email)");
-            stmt.execute("CREATE INDEX IF NOT EXISTS idx_token ON utilisateurs(token_verification)");
-            
             logger.info("Création de la table articles...");
             // Créer la table articles
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS articles (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id INT AUTO_INCREMENT PRIMARY KEY,
                     titre VARCHAR(255) NOT NULL,
                     contenu TEXT NOT NULL,
                     resume VARCHAR(500),
-                    auteur_id INTEGER NOT NULL,
+                    auteur_id INT NOT NULL,
                     date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
                     date_modification DATETIME NULL,
-                    statut TEXT DEFAULT 'PUBLIE' CHECK(statut IN ('BROUILLON','PUBLIE','ARCHIVE')),
+                    statut ENUM('BROUILLON','PUBLIE','ARCHIVE') DEFAULT 'PUBLIE',
                     image_url VARCHAR(255),
-                    FOREIGN KEY (auteur_id) REFERENCES utilisateurs(id) ON DELETE CASCADE
-                )
+                    FOREIGN KEY (auteur_id) REFERENCES utilisateurs(id) ON DELETE CASCADE,
+                    INDEX idx_auteur (auteur_id),
+                    INDEX idx_statut (statut),
+                    INDEX idx_date_creation (date_creation)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                 """);
-            
-            logger.info("Création des index pour articles...");
-            // Créer les index pour articles
-            stmt.execute("CREATE INDEX IF NOT EXISTS idx_auteur ON articles(auteur_id)");
-            stmt.execute("CREATE INDEX IF NOT EXISTS idx_statut ON articles(statut)");
-            stmt.execute("CREATE INDEX IF NOT EXISTS idx_date_creation ON articles(date_creation)");
             
             logger.info("Création de la table commentaires...");
             // Créer la table commentaires
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS commentaires (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id INT AUTO_INCREMENT PRIMARY KEY,
                     contenu TEXT NOT NULL,
-                    article_id INTEGER NOT NULL,
-                    auteur_id INTEGER NOT NULL,
+                    article_id INT NOT NULL,
+                    auteur_id INT NOT NULL,
                     date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
-                    approuve INTEGER DEFAULT 1,
+                    approuve TINYINT(1) DEFAULT 1,
                     FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE,
-                    FOREIGN KEY (auteur_id) REFERENCES utilisateurs(id) ON DELETE CASCADE
-                )
+                    FOREIGN KEY (auteur_id) REFERENCES utilisateurs(id) ON DELETE CASCADE,
+                    INDEX idx_article (article_id),
+                    INDEX idx_auteur_comment (auteur_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                 """);
-            
-            logger.info("Création des index pour commentaires...");
-            // Créer les index pour commentaires
-            stmt.execute("CREATE INDEX IF NOT EXISTS idx_article ON commentaires(article_id)");
-            stmt.execute("CREATE INDEX IF NOT EXISTS idx_auteur_comment ON commentaires(auteur_id)");
             
             logger.info("Toutes les tables ont été créées avec succès");
         }
@@ -201,7 +190,6 @@ public class ApplicationContextListener implements ServletContextListener {
     /**
      * Ajoute les données initiales (seed data) à la base de données
      * Utilise les données de seeders.sql pour peupler la base
-     * Fonctionne automatiquement sur Railway et en local si la base est vide
      */
     private void seedInitialData(java.sql.Connection conn) throws SQLException {
         // Vérifier si on doit désactiver le seed (optionnel, via variable d'environnement)
@@ -211,16 +199,7 @@ public class ApplicationContextListener implements ServletContextListener {
             return;
         }
         
-        // Le seed fonctionne automatiquement sur Railway et en local
-        // Il ne s'exécute que si la base est vide (vérifié dans initializeDatabase)
-        // OU si FORCE_SEED=true est défini (géré dans initializeDatabase)
-        
         try {
-            // Activer les clés étrangères
-            try (Statement stmt = conn.createStatement()) {
-                stmt.execute("PRAGMA foreign_keys = ON");
-            }
-            
             // Désactiver l'auto-commit pour une transaction
             conn.setAutoCommit(false);
             
@@ -228,10 +207,9 @@ public class ApplicationContextListener implements ServletContextListener {
             
             // Insérer les utilisateurs avec PreparedStatement
             logger.info("Insertion des utilisateurs...");
-            String userSql = "INSERT INTO utilisateurs (nom, prenom, email, mot_de_passe, role, actif, bio, date_inscription) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now', ?))";
+            String userSql = "INSERT INTO utilisateurs (nom, prenom, email, mot_de_passe, role, actif, bio, date_inscription) VALUES (?, ?, ?, ?, ?, ?, ?, DATE_SUB(NOW(), INTERVAL ? DAY))";
             try (java.sql.PreparedStatement pstmt = conn.prepareStatement(userSql)) {
                 // Générer le hash BCrypt pour "password123" dynamiquement
-                // Cela garantit que le hash est correct et compatible
                 String plainPassword = "password123";
                 String passwordHash = BCrypt.hashpw(plainPassword, BCrypt.gensalt());
                 logger.info("Hash BCrypt généré pour le mot de passe: " + passwordHash.substring(0, 20) + "...");
@@ -244,7 +222,7 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(5, "ADMIN");
                 pstmt.setInt(6, 1);
                 pstmt.setString(7, "Administrateur principal du forum. Passionné de technologie et de développement web.");
-                pstmt.setString(8, "-30 days");
+                pstmt.setInt(8, 30);
                 pstmt.executeUpdate();
                 
                 // Jean Dupont
@@ -255,7 +233,7 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(5, "ADMIN");
                 pstmt.setInt(6, 1);
                 pstmt.setString(7, "Co-administrateur et développeur full-stack avec 10 ans d'expérience.");
-                pstmt.setString(8, "-25 days");
+                pstmt.setInt(8, 25);
                 pstmt.executeUpdate();
                 
                 // Sophie Martin
@@ -266,7 +244,7 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(5, "MEMBRE");
                 pstmt.setInt(6, 1);
                 pstmt.setString(7, "Développeuse Java passionnée par les architectures d'entreprise et les bonnes pratiques.");
-                pstmt.setString(8, "-20 days");
+                pstmt.setInt(8, 20);
                 pstmt.executeUpdate();
                 
                 // Pierre Bernard
@@ -277,7 +255,7 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(5, "MEMBRE");
                 pstmt.setInt(6, 1);
                 pstmt.setString(7, "Expert en sécurité web et en développement d'applications sécurisées.");
-                pstmt.setString(8, "-18 days");
+                pstmt.setInt(8, 18);
                 pstmt.executeUpdate();
                 
                 // Marie Dubois
@@ -288,7 +266,7 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(5, "MEMBRE");
                 pstmt.setInt(6, 1);
                 pstmt.setString(7, "Designer UI/UX et développeuse frontend. Amoureuse du design moderne et des interfaces intuitives.");
-                pstmt.setString(8, "-15 days");
+                pstmt.setInt(8, 15);
                 pstmt.executeUpdate();
                 
                 // Thomas Lefebvre
@@ -299,7 +277,7 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(5, "MEMBRE");
                 pstmt.setInt(6, 1);
                 pstmt.setString(7, "Développeur backend spécialisé en Java EE et microservices.");
-                pstmt.setString(8, "-12 days");
+                pstmt.setInt(8, 12);
                 pstmt.executeUpdate();
                 
                 // Julie Moreau
@@ -310,7 +288,7 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(5, "MEMBRE");
                 pstmt.setInt(6, 1);
                 pstmt.setString(7, "Étudiante en informatique passionnée par le développement web et les nouvelles technologies.");
-                pstmt.setString(8, "-10 days");
+                pstmt.setInt(8, 10);
                 pstmt.executeUpdate();
                 
                 // Lucas Petit
@@ -321,7 +299,7 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(5, "MEMBRE");
                 pstmt.setInt(6, 0);
                 pstmt.setString(7, "Nouveau membre de la communauté.");
-                pstmt.setString(8, "-5 days");
+                pstmt.setInt(8, 5);
                 pstmt.executeUpdate();
                 
                 // David Smith (utilisateur de test)
@@ -332,13 +310,13 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(5, "ADMIN");
                 pstmt.setInt(6, 1);
                 pstmt.setString(7, "Administrateur de test - David Smith");
-                pstmt.setString(8, "-3 days");
+                pstmt.setInt(8, 3);
                 pstmt.executeUpdate();
             }
             
             // Insérer les articles avec PreparedStatement
             logger.info("Insertion des articles...");
-            String articleSql = "INSERT INTO articles (titre, contenu, resume, auteur_id, statut, date_creation, date_modification) VALUES (?, ?, ?, ?, ?, datetime('now', ?), ?)";
+            String articleSql = "INSERT INTO articles (titre, contenu, resume, auteur_id, statut, date_creation, date_modification) VALUES (?, ?, ?, ?, ?, DATE_SUB(NOW(), INTERVAL ? DAY), ?)";
             try (java.sql.PreparedStatement pstmt = conn.prepareStatement(articleSql)) {
                 // Article 1: Bienvenue
                 pstmt.setString(1, "Bienvenue sur notre Forum");
@@ -346,8 +324,8 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(3, "Un message de bienvenue pour tous les nouveaux membres de notre communauté de développeurs.");
                 pstmt.setInt(4, 1);
                 pstmt.setString(5, "PUBLIE");
-                pstmt.setString(6, "-25 days");
-                pstmt.setNull(7, java.sql.Types.VARCHAR); // date_modification null
+                pstmt.setInt(6, 25);
+                pstmt.setNull(7, java.sql.Types.TIMESTAMP);
                 pstmt.executeUpdate();
                 
                 // Article 2: Java EE
@@ -356,8 +334,8 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(3, "Découvrez les bases de Java EE et comment cette plateforme peut vous aider à développer des applications d'entreprise robustes et scalables.");
                 pstmt.setInt(4, 1);
                 pstmt.setString(5, "PUBLIE");
-                pstmt.setString(6, "-22 days");
-                pstmt.setNull(7, java.sql.Types.VARCHAR); // date_modification will be set separately
+                pstmt.setInt(6, 22);
+                pstmt.setNull(7, java.sql.Types.TIMESTAMP);
                 pstmt.executeUpdate();
                 
                 // Article 3: Sécurité Web
@@ -366,8 +344,8 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(3, "Apprenez les meilleures pratiques de sécurité essentielles pour protéger vos applications web contre les menaces courantes et modernes.");
                 pstmt.setInt(4, 3);
                 pstmt.setString(5, "PUBLIE");
-                pstmt.setString(6, "-20 days");
-                pstmt.setNull(7, java.sql.Types.VARCHAR); // date_modification null
+                pstmt.setInt(6, 20);
+                pstmt.setNull(7, java.sql.Types.TIMESTAMP);
                 pstmt.executeUpdate();
                 
                 // Article 4: MVC
@@ -376,18 +354,18 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(3, "Comprenez le pattern MVC en profondeur et apprenez comment l'implémenter efficacement dans vos projets web pour créer des applications bien structurées.");
                 pstmt.setInt(4, 3);
                 pstmt.setString(5, "PUBLIE");
-                pstmt.setString(6, "-18 days");
-                pstmt.setNull(7, java.sql.Types.VARCHAR); // date_modification null
+                pstmt.setInt(6, 18);
+                pstmt.setNull(7, java.sql.Types.TIMESTAMP);
                 pstmt.executeUpdate();
                 
-                // Article 5: SQLite
-                pstmt.setString(1, "SQLite : Guide Complet pour le Développement Web");
-                pstmt.setString(2, "SQLite est l'un des systèmes de gestion de bases de données relationnelles les plus populaires au monde. Il est particulièrement adapté au développement web pour de nombreuses raisons.\n\n## Qu'est-ce que SQLite ?\n\nSQLite est un moteur de base de données SQL embarqué, léger et sans serveur. Contrairement à MySQL ou PostgreSQL, SQLite ne nécessite pas de processus serveur séparé.\n\n## Caractéristiques Principales\n\n### Avantages\n- **Léger** : Bibliothèque de quelques centaines de KB\n- **Sans configuration** : Pas besoin de serveur ou de configuration complexe\n- **Rapide** : Excellentes performances pour la plupart des applications\n- **ACID** : Support complet des transactions ACID\n- **Portable** : Un seul fichier de base de données\n- **Open Source** : Licence publique du domaine\n\n### Limitations\n- Pas de gestion des utilisateurs (pas de système d'authentification)\n- Accès concurrent en écriture limité\n- Taille maximale recommandée : quelques GB\n- Pas idéal pour les applications haute concurrence\n\n## Utilisation dans le Développement Web\n\n### Quand Utiliser SQLite\n\n✅ **Idéal pour :**\n- Prototypes et applications de petite à moyenne taille\n- Applications avec peu d'accès concurrents en écriture\n- Développement et tests\n- Applications embarquées\n- Sites web avec trafic modéré\n\n❌ **À éviter pour :**\n- Applications nécessitant beaucoup d'accès concurrents en écriture\n- Applications très volumineuses (plusieurs GB)\n- Systèmes nécessitant des utilisateurs multiples avec permissions\n\nSQLite est un excellent choix pour démarrer rapidement et évoluer progressivement.");
-                pstmt.setString(3, "Découvrez comment SQLite peut être utilisé efficacement dans vos projets web, ses avantages, limitations et meilleures pratiques.");
+                // Article 5: MySQL
+                pstmt.setString(1, "MySQL : Guide Complet pour le Développement Web");
+                pstmt.setString(2, "MySQL est l'un des systèmes de gestion de bases de données relationnelles les plus populaires au monde. Il est particulièrement adapté au développement web pour de nombreuses raisons.\n\n## Qu'est-ce que MySQL ?\n\nMySQL est un SGBDR open source performant et fiable, utilisé par des millions d'applications à travers le monde.\n\n## Caractéristiques Principales\n\n### Avantages\n- **Performant** : Excellentes performances pour les applications web\n- **Scalable** : Peut gérer de très gros volumes de données\n- **Fiable** : Support complet des transactions ACID avec InnoDB\n- **Communauté** : Large communauté et excellent support\n- **Open Source** : Gratuit et open source\n\n### Fonctionnalités\n- Gestion des utilisateurs et permissions\n- Accès concurrent en écriture robuste\n- Réplication et haute disponibilité\n- Idéal pour les applications haute concurrence\n\nMySQL est un excellent choix pour les applications web de toutes tailles.");
+                pstmt.setString(3, "Découvrez comment MySQL peut être utilisé efficacement dans vos projets web, ses avantages et meilleures pratiques.");
                 pstmt.setInt(4, 1);
                 pstmt.setString(5, "PUBLIE");
-                pstmt.setString(6, "-15 days");
-                pstmt.setNull(7, java.sql.Types.VARCHAR); // date_modification null
+                pstmt.setInt(6, 15);
+                pstmt.setNull(7, java.sql.Types.TIMESTAMP);
                 pstmt.executeUpdate();
                 
                 // Article 6: Servlets
@@ -396,8 +374,8 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(3, "Apprenez les bases des Servlets Java et comment créer des applications web dynamiques avec cette technologie fondamentale.");
                 pstmt.setInt(4, 4);
                 pstmt.setString(5, "PUBLIE");
-                pstmt.setString(6, "-12 days");
-                pstmt.setNull(7, java.sql.Types.VARCHAR); // date_modification null
+                pstmt.setInt(6, 12);
+                pstmt.setNull(7, java.sql.Types.TIMESTAMP);
                 pstmt.executeUpdate();
                 
                 // Article 7: JSP
@@ -406,8 +384,8 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(3, "Découvrez comment utiliser JSP pour créer des pages web dynamiques et interactives avec Java.");
                 pstmt.setInt(4, 4);
                 pstmt.setString(5, "PUBLIE");
-                pstmt.setString(6, "-10 days");
-                pstmt.setNull(7, java.sql.Types.VARCHAR); // date_modification null
+                pstmt.setInt(6, 10);
+                pstmt.setNull(7, java.sql.Types.TIMESTAMP);
                 pstmt.executeUpdate();
                 
                 // Article 8: Déploiement
@@ -416,32 +394,32 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(3, "Apprenez les meilleures pratiques pour déployer vos applications Java web en production de manière efficace et sécurisée.");
                 pstmt.setInt(4, 2);
                 pstmt.setString(5, "PUBLIE");
-                pstmt.setString(6, "-8 days");
-                pstmt.setNull(7, java.sql.Types.VARCHAR); // date_modification null
+                pstmt.setInt(6, 8);
+                pstmt.setNull(7, java.sql.Types.TIMESTAMP);
                 pstmt.executeUpdate();
             }
             
             // Mettre à jour date_modification pour l'article 2 (Java EE)
             try (Statement stmt = conn.createStatement()) {
-                stmt.executeUpdate("UPDATE articles SET date_modification = datetime('now', '-20 days') WHERE id = 2");
+                stmt.executeUpdate("UPDATE articles SET date_modification = DATE_SUB(NOW(), INTERVAL 20 DAY) WHERE id = 2");
             }
             
             // Insérer les commentaires avec PreparedStatement
             logger.info("Insertion des commentaires...");
-            String commentSql = "INSERT INTO commentaires (contenu, article_id, auteur_id, date_creation, approuve) VALUES (?, ?, ?, datetime('now', ?), ?)";
+            String commentSql = "INSERT INTO commentaires (contenu, article_id, auteur_id, date_creation, approuve) VALUES (?, ?, ?, DATE_SUB(NOW(), INTERVAL ? DAY), ?)";
             try (java.sql.PreparedStatement pstmt = conn.prepareStatement(commentSql)) {
                 // Commentaires pour article 2
                 pstmt.setString(1, "Excellent article ! Merci pour ce partage. C'est exactement ce dont j'avais besoin pour comprendre Java EE.");
                 pstmt.setInt(2, 2);
                 pstmt.setInt(3, 3);
-                pstmt.setString(4, "-21 days");
+                pstmt.setInt(4, 21);
                 pstmt.setInt(5, 1);
                 pstmt.executeUpdate();
                 
                 pstmt.setString(1, "Très intéressant, j'ai appris beaucoup de choses. Pourriez-vous faire un article plus détaillé sur JPA ?");
                 pstmt.setInt(2, 2);
                 pstmt.setInt(3, 4);
-                pstmt.setString(4, "-20 days");
+                pstmt.setInt(4, 20);
                 pstmt.setInt(5, 1);
                 pstmt.executeUpdate();
                 
@@ -449,14 +427,14 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(1, "La sécurité est effectivement cruciale. Merci pour ces conseils pratiques, je vais les appliquer dans mon projet.");
                 pstmt.setInt(2, 3);
                 pstmt.setInt(3, 1);
-                pstmt.setString(4, "-19 days");
+                pstmt.setInt(4, 19);
                 pstmt.setInt(5, 1);
                 pstmt.executeUpdate();
                 
                 pstmt.setString(1, "Super article sur la sécurité ! Pourriez-vous approfondir la partie sur les tokens CSRF ?");
                 pstmt.setInt(2, 3);
                 pstmt.setInt(3, 2);
-                pstmt.setString(4, "-18 days");
+                pstmt.setInt(4, 18);
                 pstmt.setInt(5, 1);
                 pstmt.executeUpdate();
                 
@@ -464,29 +442,29 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(1, "Le pattern MVC est vraiment essentiel. Cet article explique très bien les concepts. Merci !");
                 pstmt.setInt(2, 4);
                 pstmt.setInt(3, 5);
-                pstmt.setString(4, "-17 days");
+                pstmt.setInt(4, 17);
                 pstmt.setInt(5, 1);
                 pstmt.executeUpdate();
                 
                 pstmt.setString(1, "J'ai une question : comment gérer les dépendances circulaires entre le modèle et le contrôleur ?");
                 pstmt.setInt(2, 4);
                 pstmt.setInt(3, 6);
-                pstmt.setString(4, "-16 days");
+                pstmt.setInt(4, 16);
                 pstmt.setInt(5, 1);
                 pstmt.executeUpdate();
                 
                 // Commentaires pour article 5
-                pstmt.setString(1, "SQLite est effectivement un excellent choix pour démarrer. Merci pour ce guide complet !");
+                pstmt.setString(1, "MySQL est effectivement un excellent choix pour le développement web. Merci pour ce guide complet !");
                 pstmt.setInt(2, 5);
                 pstmt.setInt(3, 3);
-                pstmt.setString(4, "-14 days");
+                pstmt.setInt(4, 14);
                 pstmt.setInt(5, 1);
                 pstmt.executeUpdate();
                 
-                pstmt.setString(1, "Très bon article ! J'utilise SQLite dans mon projet et je confirme que c'est parfait pour les petites applications.");
+                pstmt.setString(1, "Très bon article ! J'utilise MySQL dans mon projet et je confirme que c'est parfait pour les applications web.");
                 pstmt.setInt(2, 5);
                 pstmt.setInt(3, 7);
-                pstmt.setString(4, "-13 days");
+                pstmt.setInt(4, 13);
                 pstmt.setInt(5, 1);
                 pstmt.executeUpdate();
                 
@@ -494,7 +472,7 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(1, "Les Servlets sont la base de tout développement web Java. Merci pour cette introduction claire.");
                 pstmt.setInt(2, 6);
                 pstmt.setInt(3, 4);
-                pstmt.setString(4, "-11 days");
+                pstmt.setInt(4, 11);
                 pstmt.setInt(5, 1);
                 pstmt.executeUpdate();
                 
@@ -502,7 +480,7 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(1, "JSP est très pratique pour créer des interfaces. Avez-vous des exemples avec JSTL ?");
                 pstmt.setInt(2, 7);
                 pstmt.setInt(3, 5);
-                pstmt.setString(4, "-9 days");
+                pstmt.setInt(4, 9);
                 pstmt.setInt(5, 1);
                 pstmt.executeUpdate();
                 
@@ -510,14 +488,14 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(1, "Excellent guide de déploiement ! Les variables d'environnement sont effectivement essentielles.");
                 pstmt.setInt(2, 8);
                 pstmt.setInt(3, 6);
-                pstmt.setString(4, "-7 days");
+                pstmt.setInt(4, 7);
                 pstmt.setInt(5, 1);
                 pstmt.executeUpdate();
                 
-                pstmt.setString(1, "Merci pour ces informations. Pourriez-vous faire un article sur le déploiement sur Railway ou Heroku ?");
+                pstmt.setString(1, "Merci pour ces informations. Pourriez-vous faire un article sur le déploiement sur le cloud ?");
                 pstmt.setInt(2, 8);
                 pstmt.setInt(3, 7);
-                pstmt.setString(4, "-6 days");
+                pstmt.setInt(4, 6);
                 pstmt.setInt(5, 1);
                 pstmt.executeUpdate();
                 
@@ -525,14 +503,14 @@ public class ApplicationContextListener implements ServletContextListener {
                 pstmt.setString(1, "Bienvenue à tous les nouveaux membres ! N'hésitez pas à poser des questions.");
                 pstmt.setInt(2, 1);
                 pstmt.setInt(3, 2);
-                pstmt.setString(4, "-24 days");
+                pstmt.setInt(4, 24);
                 pstmt.setInt(5, 1);
                 pstmt.executeUpdate();
                 
                 pstmt.setString(1, "Super communauté ! Je suis ravi de faire partie de ce forum.");
                 pstmt.setInt(2, 1);
                 pstmt.setInt(3, 3);
-                pstmt.setString(4, "-23 days");
+                pstmt.setInt(4, 23);
                 pstmt.setInt(5, 1);
                 pstmt.executeUpdate();
             }
@@ -543,7 +521,6 @@ public class ApplicationContextListener implements ServletContextListener {
             
             // Vérifier que les données ont été insérées
             try (Statement stmt = conn.createStatement()) {
-                // Vérifier les utilisateurs
                 try (java.sql.ResultSet rs = stmt.executeQuery("SELECT COUNT(*) as count FROM utilisateurs")) {
                     if (rs.next()) {
                         int userCount = rs.getInt("count");
@@ -551,7 +528,6 @@ public class ApplicationContextListener implements ServletContextListener {
                     }
                 }
                 
-                // Vérifier les articles
                 try (java.sql.ResultSet rs = stmt.executeQuery("SELECT COUNT(*) as count FROM articles")) {
                     if (rs.next()) {
                         int articleCount = rs.getInt("count");
@@ -559,7 +535,6 @@ public class ApplicationContextListener implements ServletContextListener {
                     }
                 }
                 
-                // Vérifier un utilisateur spécifique
                 try (java.sql.ResultSet rs = stmt.executeQuery(
                         "SELECT email, actif, role FROM utilisateurs WHERE email = 'admin@forum.com'")) {
                     if (rs.next()) {
@@ -604,7 +579,6 @@ public class ApplicationContextListener implements ServletContextListener {
             logger.severe("Erreur lors de l'ajout des données initiales: " + e.getMessage());
             logger.severe("Code d'erreur SQL: " + e.getErrorCode());
             logger.severe("État SQL: " + e.getSQLState());
-            // Ne pas faire échouer l'application si le seed échoue, mais logger l'erreur
             e.printStackTrace();
         }
     }
